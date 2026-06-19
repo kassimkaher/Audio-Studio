@@ -1,0 +1,23 @@
+{
+  "/Users/devalqaasem/Documents/automated_project/VoiceStudio/VoiceStudio/App/VoiceStudioApp.swift" : {
+    "const-values" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/VoiceStudioApp.swiftconstvalues",
+    "dependencies" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/VoiceStudioApp.d",
+    "diagnostics" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/VoiceStudioApp.dia",
+    "object" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/VoiceStudioApp.o",
+    "swift-dependencies" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/VoiceStudioApp.swiftdeps"
+  },
+  "/Users/devalqaasem/Documents/automated_project/VoiceStudio/VoiceStudio/Audio/Analysis/WaveformSampler.swift" : {
+    "const-values" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/WaveformSampler.swiftconstvalues",
+    "dependencies" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/WaveformSampler.d",
+    "diagnostics" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/WaveformSampler.dia",
+    "object" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/WaveformSampler.o",
+    "swift-dependencies" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/WaveformSampler.swiftdeps"
+  },
+  "/Users/devalqaasem/Documents/automated_project/VoiceStudio/VoiceStudio/Views/Shared/TrackHeaderView.swift" : {
+    "const-values" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/TrackHeaderView.swiftconstvalues",
+    "dependencies" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/TrackHeaderView.d",
+    "diagnostics" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/TrackHeaderView.dia",
+    "object" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/TrackHeaderView.o",
+    "swift-dependencies" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/TrackHeaderView.swiftdeps"
+  }
+}

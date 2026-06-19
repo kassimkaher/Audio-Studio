@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>logFormatVersion</key>
+	<integer>12</integer>
+	<key>logs</key>
+	<dict>
+		<key>5C312A13-7764-4F36-AAE2-7276C6E1211F</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>5C312A13-7764-4F36-AAE2-7276C6E1211F.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>W</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>4</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>VoiceStudio project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>VoiceStudioMac</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Building project VoiceStudio with scheme VoiceStudioMac and configuration Release</string>
+			<key>timeStartedRecording</key>
+			<real>803469276.88455606</real>
+			<key>timeStoppedRecording</key>
+			<real>803469290.03823304</real>
+			<key>title</key>
+			<string>Building project VoiceStudio with scheme VoiceStudioMac and configuration Release</string>
+			<key>uniqueIdentifier</key>
+			<string>5C312A13-7764-4F36-AAE2-7276C6E1211F</string>
+		</dict>
+		<key>E46095FF-15E4-4810-9A80-6C90D50218C6</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>E46095FF-15E4-4810-9A80-6C90D50218C6.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>0</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>VoiceStudio project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>VoiceStudioMac</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Cleaning project VoiceStudio with scheme VoiceStudioMac and configuration Release</string>
+			<key>timeStartedRecording</key>
+			<real>803469276.64050996</real>
+			<key>timeStoppedRecording</key>
+			<real>803469276.88157105</real>
+			<key>title</key>
+			<string>Cleaning project VoiceStudio with scheme VoiceStudioMac and configuration Release</string>
+			<key>uniqueIdentifier</key>
+			<string>E46095FF-15E4-4810-9A80-6C90D50218C6</string>
+		</dict>
+	</dict>
+</dict>
+</plist>

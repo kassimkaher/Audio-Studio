@@ -1,0 +1,12 @@
+{
+  "/Users/devalqaasem/Documents/automated_project/VoiceStudio/VoiceStudio/App/AppEnvironment.swift" : {
+    "abi-baseline-json" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/Release/Build/Intermediates.noindex/VoiceStudio.build/Release/VoiceStudioMac.build/Objects-normal/arm64/VoiceStudioMac.abi.json",
+    "const-values" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/Release/Build/Intermediates.noindex/VoiceStudio.build/Release/VoiceStudioMac.build/Objects-normal/arm64/VoiceStudioMac-primary.swiftconstvalues",
+    "dependencies" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/Release/Build/Intermediates.noindex/VoiceStudio.build/Release/VoiceStudioMac.build/Objects-normal/arm64/VoiceStudioMac-primary.d",
+    "diagnostics" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/Release/Build/Intermediates.noindex/VoiceStudio.build/Release/VoiceStudioMac.build/Objects-normal/arm64/VoiceStudioMac-primary.dia",
+    "objc-header" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/Release/Build/Intermediates.noindex/VoiceStudio.build/Release/VoiceStudioMac.build/Objects-normal/arm64/VoiceStudioMac-Swift.h",
+    "swiftdoc" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/Release/Build/Intermediates.noindex/VoiceStudio.build/Release/VoiceStudioMac.build/Objects-normal/arm64/VoiceStudioMac.swiftdoc",
+    "swiftmodule" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/Release/Build/Intermediates.noindex/VoiceStudio.build/Release/VoiceStudioMac.build/Objects-normal/arm64/VoiceStudioMac.swiftmodule",
+    "swiftsourceinfo" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/Release/Build/Intermediates.noindex/VoiceStudio.build/Release/VoiceStudioMac.build/Objects-normal/arm64/VoiceStudioMac.swiftsourceinfo"
+  }
+}

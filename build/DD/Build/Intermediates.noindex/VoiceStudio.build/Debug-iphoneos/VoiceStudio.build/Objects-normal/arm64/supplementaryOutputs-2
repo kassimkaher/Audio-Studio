@@ -1,0 +1,23 @@
+{
+  "/Users/devalqaasem/Documents/automated_project/VoiceStudio/VoiceStudio/Audio/Engine/AudioSessionManager.swift" : {
+    "const-values" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/AudioSessionManager.swiftconstvalues",
+    "dependencies" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/AudioSessionManager.d",
+    "diagnostics" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/AudioSessionManager.dia",
+    "object" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/AudioSessionManager.o",
+    "swift-dependencies" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/AudioSessionManager.swiftdeps"
+  },
+  "/Users/devalqaasem/Documents/automated_project/VoiceStudio/VoiceStudio/Audio/Engine/ChainBuilder.swift" : {
+    "const-values" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/ChainBuilder.swiftconstvalues",
+    "dependencies" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/ChainBuilder.d",
+    "diagnostics" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/ChainBuilder.dia",
+    "object" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/ChainBuilder.o",
+    "swift-dependencies" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/ChainBuilder.swiftdeps"
+  },
+  "/Users/devalqaasem/Documents/automated_project/VoiceStudio/VoiceStudio/Models/AudioSource.swift" : {
+    "const-values" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/AudioSource.swiftconstvalues",
+    "dependencies" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/AudioSource.d",
+    "diagnostics" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/AudioSource.dia",
+    "object" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/AudioSource.o",
+    "swift-dependencies" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/AudioSource.swiftdeps"
+  }
+}

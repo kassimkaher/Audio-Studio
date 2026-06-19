@@ -1,0 +1,23 @@
+{
+  "/Users/devalqaasem/Documents/automated_project/VoiceStudio/VoiceStudio/Audio/Engine/CoreAudioDevices.swift" : {
+    "const-values" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/CoreAudioDevices.swiftconstvalues",
+    "dependencies" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/CoreAudioDevices.d",
+    "diagnostics" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/CoreAudioDevices.dia",
+    "object" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/CoreAudioDevices.o",
+    "swift-dependencies" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/CoreAudioDevices.swiftdeps"
+  },
+  "/Users/devalqaasem/Documents/automated_project/VoiceStudio/VoiceStudio/Audio/Nodes/DelayNode.swift" : {
+    "const-values" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/DelayNode.swiftconstvalues",
+    "dependencies" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/DelayNode.d",
+    "diagnostics" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/DelayNode.dia",
+    "object" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/DelayNode.o",
+    "swift-dependencies" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/DelayNode.swiftdeps"
+  },
+  "/Users/devalqaasem/Documents/automated_project/VoiceStudio/VoiceStudio/Views/Shared/DevicePicker.swift" : {
+    "const-values" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/DevicePicker.swiftconstvalues",
+    "dependencies" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/DevicePicker.d",
+    "diagnostics" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/DevicePicker.dia",
+    "object" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/DevicePicker.o",
+    "swift-dependencies" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/DevicePicker.swiftdeps"
+  }
+}

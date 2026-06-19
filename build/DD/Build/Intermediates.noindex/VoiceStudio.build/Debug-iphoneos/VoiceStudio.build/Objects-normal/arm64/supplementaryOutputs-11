@@ -1,0 +1,23 @@
+{
+  "/Users/devalqaasem/Documents/automated_project/VoiceStudio/VoiceStudio/Audio/Engine/RecordingService.swift" : {
+    "const-values" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/RecordingService.swiftconstvalues",
+    "dependencies" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/RecordingService.d",
+    "diagnostics" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/RecordingService.dia",
+    "object" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/RecordingService.o",
+    "swift-dependencies" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/RecordingService.swiftdeps"
+  },
+  "/Users/devalqaasem/Documents/automated_project/VoiceStudio/VoiceStudio/Audio/Nodes/ReverbNode.swift" : {
+    "const-values" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/ReverbNode.swiftconstvalues",
+    "dependencies" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/ReverbNode.d",
+    "diagnostics" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/ReverbNode.dia",
+    "object" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/ReverbNode.o",
+    "swift-dependencies" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/ReverbNode.swiftdeps"
+  },
+  "/Users/devalqaasem/Documents/automated_project/VoiceStudio/VoiceStudio/Views/iOS/RootView.swift" : {
+    "const-values" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/RootView.swiftconstvalues",
+    "dependencies" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/RootView.d",
+    "diagnostics" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/RootView.dia",
+    "object" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/RootView.o",
+    "swift-dependencies" : "/Users/devalqaasem/Documents/automated_project/VoiceStudio/build/DD/Build/Intermediates.noindex/VoiceStudio.build/Debug-iphoneos/VoiceStudio.build/Objects-normal/arm64/RootView.swiftdeps"
+  }
+}
