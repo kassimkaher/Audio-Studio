@@ -53,6 +53,10 @@ final class WaveformSampler: ObservableObject {
     @Published private(set) var levels: [Float] = []
     /// Current input peak for a simple level meter.
     @Published private(set) var currentLevel: Float = 0
+    /// True when the input has hit (near) full scale recently — i.e. it's
+    /// clipping at the source and the take will be distorted. Held briefly so the
+    /// warning is visible.
+    @Published private(set) var isClipping = false
 
     private let buffer: PeakRingBuffer
     private var timer: Timer?
@@ -77,6 +81,7 @@ final class WaveformSampler: ObservableObject {
         buffer.reset()
         levels = []
         currentLevel = 0
+        isClipping = false
     }
 
     /// Called on the audio thread. Computes a single peak for the buffer.
@@ -93,6 +98,8 @@ final class WaveformSampler: ObservableObject {
         let snapshot = buffer.snapshot()
         levels = snapshot
         currentLevel = snapshot.last ?? 0
+        // Clipping if anything in the last ~0.5 s hit near full scale.
+        isClipping = (snapshot.suffix(15).max() ?? 0) >= 0.985
     }
 }
 

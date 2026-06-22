@@ -225,7 +225,39 @@ enum PresetLibrary {
         ], wetDryMix: 1.0, intensity: 0.95)
     )
 
-    static let all: [VocalPreset] = [general, singers, anasheed, quran, hussainiPro]
+    /// "Live Majlis / Crowded Hall" — the voice placed in a packed audience via
+    /// the crowd-absorptive `LiveMajlis` IR: dark highs, warm low-mids, and wide
+    /// early reflections. Pair with Audience Mode for the full atmosphere.
+    static let liveMajlis = VocalPreset(
+        id: "signature.liveMajlis",
+        name: "Live Majlis / Crowded Hall",
+        category: .signature,
+        subtitle: "Packed-audience space: warm low-mids, softened highs, wide reflections",
+        symbol: "person.3.fill",
+        chain: EffectChainSpec(stages: [
+            highPass(90),
+            noiseGate(threshold: -50),
+            mlSlot,
+            // Crowd tonality: lift low-mid warmth, ease presence, roll off air
+            // (a packed hall absorbs the highs).
+            EffectStageSpec(kind: .parametricEQ, params: [
+                ParamKeys.warmthGain: 2.5, ParamKeys.presenceGain: 1.0, ParamKeys.airGain: -3.0
+            ]),
+            EffectStageSpec(kind: .deEsser, params: [
+                ParamKeys.deEssFrequency: 6500, ParamKeys.deEssAmount: -4
+            ]),
+            EffectStageSpec(kind: .compressor, params: [
+                ParamKeys.threshold: -16, ParamKeys.ratio: 2.5,
+                ParamKeys.attack: 0.008, ParamKeys.release: 0.2, ParamKeys.masterGain: 2
+            ]),
+            // Spatial presence: the crowd-absorptive impulse response.
+            EffectStageSpec(kind: .convolutionReverb,
+                            params: [ParamKeys.mix: 0.5],
+                            stringParams: [ParamKeys.ir: "LiveMajlis"])
+        ], wetDryMix: 1.0, intensity: 0.95)
+    )
+
+    static let all: [VocalPreset] = [general, singers, anasheed, quran, hussainiPro, liveMajlis]
 
     static func presets(in category: PresetCategory) -> [VocalPreset] {
         all.filter { $0.category == category }

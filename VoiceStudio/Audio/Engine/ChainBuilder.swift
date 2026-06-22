@@ -11,7 +11,8 @@ import AVFoundation
 enum ChainBuilder {
 
     /// Maps a stage spec to its concrete node implementation.
-    static func makeNode(for spec: EffectStageSpec) -> AudioProcessingNode {
+    /// `offline` keeps the convolution reverb at full IR length for export.
+    static func makeNode(for spec: EffectStageSpec, offline: Bool = false) -> AudioProcessingNode {
         let node: AudioProcessingNode
         switch spec.kind {
         case .highPass:          node = HighPassNode(id: spec.id)
@@ -28,7 +29,7 @@ enum ChainBuilder {
         case .distortion:        node = WarmthNode(id: spec.id)
         case .lowPass:           node = LowPassNode(id: spec.id)
         case .limiter:           node = LimiterNode(id: spec.id)
-        case .convolutionReverb: node = ConvolutionReverbNode(id: spec.id)
+        case .convolutionReverb: node = ConvolutionReverbNode(id: spec.id, offline: offline)
         }
         node.isEnabled = spec.isEnabled
         return node
@@ -47,8 +48,13 @@ final class ProcessingChain {
     private let outputMixer = AVAudioMixerNode()
     private(set) var nodes: [AudioProcessingNode] = []
     private(set) var spec: EffectChainSpec
+    /// When true (offline mixdown), the convolution reverb uses its full IR.
+    private let offline: Bool
 
-    init(spec: EffectChainSpec) { self.spec = spec }
+    init(spec: EffectChainSpec, offline: Bool = false) {
+        self.spec = spec
+        self.offline = offline
+    }
 
     /// Attaches and connects the whole chain. `source` is the upstream node
     /// (e.g. mic input or a player). Returns the node downstream stages should
@@ -80,7 +86,7 @@ final class ProcessingChain {
         engine.connect(source, to: splitMixer, format: sourceFormat)
 
         // Build and attach (with internal wiring) the wet-path nodes in order.
-        nodes = spec.stages.map { ChainBuilder.makeNode(for: $0) }
+        nodes = spec.stages.map { ChainBuilder.makeNode(for: $0, offline: offline) }
         nodes.forEach { $0.attach(to: engine, format: processingFormat) }
 
         // Fan the split mixer out (in processing format) to dry + wet-path head.

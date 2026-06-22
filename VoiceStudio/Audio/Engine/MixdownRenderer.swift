@@ -64,19 +64,22 @@ final class MixdownRenderer: ObservableObject {
 
         var players: [AVAudioPlayerNode] = []
         var chains: [ProcessingChain] = []
-        var openFiles: [UUID: AVAudioFile] = [:]
 
+        // A fresh AVAudioFile PER CLIP — never shared. AVAudioFile has a single
+        // read head and isn't safe to share across player nodes; reusing one for
+        // several clips/tracks (e.g. duplicated takes) makes all but one render
+        // silence, so tracks would go missing from the mix.
         func openFile(_ sourceID: UUID) -> AVAudioFile? {
-            if let f = openFiles[sourceID] { return f }
             guard let source = project.source(for: sourceID),
                   let f = try? AVAudioFile(forReading: source.url) else { return nil }
-            openFiles[sourceID] = f
             return f
         }
 
         // Per-clip routing (mirrors PlaybackService): each clip → optional clip
         // chain → track sum mixer → track master chain → track gain → main.
-        for track in project.tracks where project.isAudible(track) {
+        // Export includes every track except **muted** ones — Solo is a live
+        // monitoring aid and must not silently drop tracks from the mixdown.
+        for track in project.tracks where !track.isMuted {
             let sumMixer = AVAudioMixerNode()
             let gainMixer = AVAudioMixerNode()
             engine.attach(sumMixer)
@@ -87,11 +90,12 @@ final class MixdownRenderer: ObservableObject {
                 let fileFormat = file.processingFormat
                 let player = AVAudioPlayerNode()
                 engine.attach(player)
+                player.volume = max(0, min(clip.gain, 2))   // bake clip gain into the mix
 
                 if let clipSpec = clip.effectChain {
                     let proc = AVAudioFormat(standardFormatWithSampleRate: fileFormat.sampleRate,
                                              channels: AudioFormatConstants.mixdownChannelCount) ?? fileFormat
-                    let clipChain = ProcessingChain(spec: clipSpec)
+                    let clipChain = ProcessingChain(spec: clipSpec, offline: true)
                     let out = clipChain.install(into: engine, source: player,
                                                 sourceFormat: fileFormat, processingFormat: proc)
                     engine.connect(out, to: sumMixer, format: proc)
@@ -100,7 +104,10 @@ final class MixdownRenderer: ObservableObject {
                     engine.connect(player, to: sumMixer, format: fileFormat)
                 }
 
-                let when = AVAudioTime(sampleTime: clip.timelineStartFrame, atRate: fileFormat.sampleRate)
+                // `timelineStartFrame` is in PROJECT frames; the offline render
+                // timeline runs at the project (render) rate — not the file rate.
+                // (startingFrame/frameCount stay in the file's own frames.)
+                let when = AVAudioTime(sampleTime: clip.timelineStartFrame, atRate: project.sampleRate)
                 player.scheduleSegment(file,
                                        startingFrame: clip.sourceInFrame,
                                        frameCount: AVAudioFrameCount(clip.frameLength),
@@ -108,7 +115,7 @@ final class MixdownRenderer: ObservableObject {
                 players.append(player)
             }
 
-            let masterChain = ProcessingChain(spec: track.effectChain)
+            let masterChain = ProcessingChain(spec: track.effectChain, offline: true)
             let out = masterChain.install(into: engine, source: sumMixer,
                                           sourceFormat: renderFormat, processingFormat: renderFormat)
             engine.connect(out, to: gainMixer, format: renderFormat)

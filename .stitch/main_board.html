@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Voice Studio Pro - Main Studio Board</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-surface": "#e2e2e6",
+                      "tertiary-fixed-dim": "#ffb3b2",
+                      "primary-container": "#00f5d4",
+                      "secondary-fixed-dim": "#ffba27",
+                      "on-secondary-fixed-variant": "#5e4100",
+                      "inverse-surface": "#e2e2e6",
+                      "tertiary-fixed": "#ffdad8",
+                      "surface-container-highest": "#333538",
+                      "surface-container-lowest": "#0c0e11",
+                      "surface-variant": "#333538",
+                      "outline-variant": "#3a4a46",
+                      "primary-fixed-dim": "#00dfc1",
+                      "on-tertiary-fixed-variant": "#92001e",
+                      "on-error": "#690005",
+                      "on-primary": "#00382f",
+                      "error": "#ffb4ab",
+                      "inverse-primary": "#006b5b",
+                      "on-secondary-container": "#694900",
+                      "on-error-container": "#ffdad6",
+                      "secondary": "#ffd795",
+                      "on-primary-fixed-variant": "#005144",
+                      "surface-container-high": "#282a2d",
+                      "secondary-container": "#fbb400",
+                      "on-tertiary-container": "#c1002b",
+                      "outline": "#83948f",
+                      "tertiary": "#fff5f4",
+                      "surface-container-low": "#1a1c1f",
+                      "surface": "#111316",
+                      "on-tertiary": "#680012",
+                      "primary-fixed": "#26fedc",
+                      "on-secondary": "#422c00",
+                      "surface-dim": "#111316",
+                      "on-background": "#e2e2e6",
+                      "on-surface-variant": "#b9cac4",
+                      "on-primary-fixed": "#00201a",
+                      "on-secondary-fixed": "#271900",
+                      "on-primary-container": "#006c5c",
+                      "tertiary-container": "#ffcfcd",
+                      "surface-container": "#1e2023",
+                      "on-tertiary-fixed": "#410008",
+                      "surface-tint": "#00dfc1",
+                      "error-container": "#93000a",
+                      "background": "#111316",
+                      "inverse-on-surface": "#2f3034",
+                      "secondary-fixed": "#ffdea9",
+                      "primary": "#d7fff3",
+                      "surface-bright": "#37393d"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "4px",
+                      "track-height-md": "64px",
+                      "panel-padding": "16px",
+                      "track-height-sm": "32px",
+                      "sidebar-width": "280px"
+              },
+              "fontFamily": {
+                      "label-caps": ["Geist"],
+                      "label-mono-sm": ["JetBrains Mono"],
+                      "headline-md": ["Geist"],
+                      "headline-lg": ["Geist"],
+                      "body-md": ["Inter"],
+                      "display-timecode": ["JetBrains Mono"]
+              },
+              "fontSize": {
+                      "label-caps": ["10px", {"lineHeight": "12px", "letterSpacing": "0.08em", "fontWeight": "700"}],
+                      "label-mono-sm": ["11px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                      "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                      "headline-lg": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "display-timecode": ["24px", {"lineHeight": "1.1", "letterSpacing": "-0.05em", "fontWeight": "700"}] /* Scaled down slightly to fit header */
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0c0e11; }
+        ::-webkit-scrollbar-thumb { background: #3a4a46; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #83948f; }
+
+        /* Striped waveform simulation */
+        .waveform-teal {
+            background: repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 245, 212, 0.4) 2px, rgba(0, 245, 212, 0.8) 4px);
+            mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+        }
+        .waveform-gold {
+            background: repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(251, 180, 0, 0.4) 2px, rgba(251, 180, 0, 0.8) 4px);
+            mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+        }
+        
+        /* Recording state glow */
+        .recording-glow {
+            box-shadow: inset 0 0 120px rgba(255, 0, 60, 0.15);
+        }
+    </style>
+</head>
+<body class="bg-surface-container-lowest text-on-surface h-screen w-screen overflow-hidden font-body-md selection:bg-primary-container selection:text-on-primary-container relative flex flex-col">
+<!-- Global Recording Glow Overlay -->
+<div class="absolute inset-0 pointer-events-none recording-glow z-50 mix-blend-screen"></div>
+<!-- TOP NAV BAR (TopNavBar Component & Prompts) -->
+<header class="bg-surface-container-highest dark:bg-surface-container-highest border-b border-outline-variant flex justify-between items-center w-full px-panel-padding h-track-height-md shrink-0 relative z-40">
+<!-- Left: Brand & Links -->
+<div class="flex items-center gap-6">
+<div class="font-headline-lg text-headline-lg text-primary-fixed font-bold tracking-tight uppercase">
+                Voice Studio Pro
+            </div>
+<nav class="hidden md:flex items-center gap-4">
+<!-- Inactive Links -->
+<a class="text-on-surface-variant font-medium hover:bg-surface-variant hover:text-primary transition-colors text-sm px-2 py-1 rounded" href="#">File</a>
+<a class="text-on-surface-variant font-medium hover:bg-surface-variant hover:text-primary transition-colors text-sm px-2 py-1 rounded" href="#">Edit</a>
+<a class="text-on-surface-variant font-medium hover:bg-surface-variant hover:text-primary transition-colors text-sm px-2 py-1 rounded" href="#">Track</a>
+<a class="text-on-surface-variant font-medium hover:bg-surface-variant hover:text-primary transition-colors text-sm px-2 py-1 rounded" href="#">Project</a>
+<a class="text-on-surface-variant font-medium hover:bg-surface-variant hover:text-primary transition-colors text-sm px-2 py-1 rounded" href="#">View</a>
+<a class="text-on-surface-variant font-medium hover:bg-surface-variant hover:text-primary transition-colors text-sm px-2 py-1 rounded" href="#">Window</a>
+</nav>
+</div>
+<!-- Center: Transport & Timecode -->
+<div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-6 bg-surface-container px-4 py-2 rounded-xl border border-outline-variant shadow-lg">
+<div class="flex items-center gap-2">
+<button class="text-on-surface-variant hover:text-primary-container transition-colors"><span class="material-symbols-outlined text-2xl" data-icon="fast_rewind">fast_rewind</span></button>
+<button class="text-on-surface-variant hover:text-primary-container transition-colors"><span class="material-symbols-outlined text-3xl" data-icon="play_arrow">play_arrow</span></button>
+<button class="text-error hover:scale-105 transition-transform animate-pulse"><span class="material-symbols-outlined text-2xl" data-icon="fiber_manual_record" style="font-variation-settings: 'FILL' 1;">fiber_manual_record</span></button>
+</div>
+<div class="h-8 w-px bg-outline-variant mx-2"></div>
+<div class="flex flex-col items-center justify-center">
+<div class="font-label-caps text-label-caps text-error mb-1 tracking-wider">Ziyarah Mode - ● LIVE REC</div>
+<div class="font-display-timecode text-display-timecode text-primary-container drop-shadow-[0_0_8px_rgba(0,245,212,0.6)] tabular-nums">
+                    00:01:24.300 <span class="text-on-surface-variant text-lg">/ 03:12.000</span>
+</div>
+</div>
+</div>
+<!-- Right: Actions -->
+<div class="flex items-center gap-4">
+<div class="hidden lg:flex items-center gap-3 mr-4 font-label-mono-sm text-label-mono-sm text-on-surface-variant border border-outline-variant rounded-lg px-3 py-1.5 bg-surface">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm" data-icon="settings_input_component">settings_input_component</span> In 1/2</span>
+</div>
+<button class="text-primary-fixed-dim border border-primary-fixed-dim hover:bg-surface-variant hover:text-primary transition-colors font-medium text-sm px-4 py-2 rounded-lg">
+                Export Mixdown
+            </button>
+<div class="flex items-center gap-2">
+<button class="text-on-surface-variant hover:bg-surface-variant hover:text-primary transition-colors p-2 rounded-full"><span class="material-symbols-outlined" data-icon="settings">settings</span></button>
+<button class="text-on-surface-variant hover:bg-surface-variant hover:text-primary transition-colors p-2 rounded-full"><span class="material-symbols-outlined" data-icon="tune">tune</span></button>
+</div>
+</div>
+</header>
+<!-- MAIN INTERLOCKED LAYOUT -->
+<div class="flex flex-1 overflow-hidden w-full relative">
+<!-- LEFT SIDEBAR (SideNavBar Component) -->
+<aside class="bg-surface-container-low dark:bg-surface-container-low w-sidebar-width shrink-0 border-r border-outline-variant flex flex-col relative z-30">
+<!-- Header -->
+<div class="p-panel-padding border-b border-outline-variant flex items-center gap-3">
+<img class="w-10 h-10 rounded-full border-2 border-outline-variant object-cover" data-alt="A small, professional avatar portrait of a modern audio producer wearing studio headphones in a softly lit, dark studio environment. High contrast, cinematic lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXv4FIwu-2XAyT4t-1fqdF4m_0TOESkJpSVmyYop-ns1KV0MdqRTFp5LKQ7D8bC3GZ77ha_3FDdUux_01iP3la-D4FKZt--kNoClMg7GeyEj3wNePk_KyZcMKgaWKnECgrQmO6fZyDb-nNDPU5jfN_bnsQcVa_i1juVljWNgbNDSHnJzAbmje4bbD8HRpN0wuaNjq8NHG2ibCqInrEki0e53AU2_nk5IvV6uiDAySU9kvDILDG5SowgPhNSmlGBszj9WGkNjQw52o"/>
+<div>
+<h2 class="font-headline-md text-headline-md text-secondary-container">Workspace Explorer</h2>
+<p class="font-label-mono-sm text-label-mono-sm text-on-surface-variant">Vocal Production Hub</p>
+</div>
+</div>
+<!-- CTA -->
+<div class="p-4 border-b border-outline-variant">
+<button class="w-full bg-surface-variant hover:bg-surface-container text-on-surface font-medium text-sm py-2 px-4 rounded-xl border border-outline-variant transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span> Add New Track
+                </button>
+</div>
+<!-- Navigation Tabs (Scrollable) -->
+<nav class="flex-1 overflow-y-auto py-2">
+<!-- Inactive Tab -->
+<a class="text-on-surface-variant py-3 px-4 flex items-center gap-3 hover:bg-surface-container hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="folder_open">folder_open</span>
+<span class="font-label-caps text-label-caps">Assets</span>
+</a>
+<!-- Active Tab Logic: "Vocal Profiles" -->
+<div class="flex flex-col">
+<a class="text-secondary-fixed-dim bg-surface-container-high border-l-4 border-secondary-fixed-dim py-3 px-4 flex items-center justify-between transition-transform duration-150 translate-x-1" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined" data-icon="record_voice_over" style="font-variation-settings: 'FILL' 1;">record_voice_over</span>
+<span class="font-label-caps text-label-caps">Vocal Profiles</span>
+</div>
+<span class="material-symbols-outlined text-sm" data-icon="expand_more">expand_more</span>
+</a>
+<div class="pl-12 pr-4 py-2 flex flex-col gap-2 bg-surface-container-lowest/50">
+<div class="flex items-center justify-between text-sm text-on-surface hover:text-secondary-container cursor-pointer">
+<span class="truncate">✦ Hussaini Pro</span>
+<span class="text-[10px] bg-secondary-container/20 text-secondary-container px-1.5 py-0.5 rounded">PREMIUM</span>
+</div>
+<div class="flex items-center justify-between text-sm text-on-surface-variant hover:text-on-surface cursor-pointer">
+<span class="truncate">Classic Studio</span>
+</div>
+</div>
+</div>
+<!-- Open Tab: Acoustics -->
+<div class="flex flex-col mt-1">
+<a class="text-on-surface-variant py-3 px-4 flex items-center justify-between hover:bg-surface-container hover:text-on-surface transition-colors" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined" data-icon="settings_input_antenna">settings_input_antenna</span>
+<span class="font-label-caps text-label-caps">IR Acoustics</span>
+</div>
+<span class="material-symbols-outlined text-sm" data-icon="expand_more">expand_more</span>
+</a>
+<div class="pl-12 pr-4 py-2 flex flex-col gap-3">
+<div class="flex items-center gap-2 text-sm text-on-surface-variant hover:text-primary-container cursor-pointer">
+<span class="material-symbols-outlined text-base" data-icon="account_balance">account_balance</span>
+<span>Grand Mosque</span>
+</div>
+<div class="flex items-center gap-2 text-sm text-secondary-container cursor-pointer font-medium">
+<span class="material-symbols-outlined text-base" data-icon="groups">groups</span>
+<span>👥 Live Majlis</span>
+</div>
+</div>
+</div>
+<!-- Inactive Tab -->
+<a class="text-on-surface-variant py-3 px-4 flex items-center gap-3 hover:bg-surface-container hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="travel_explore">travel_explore</span>
+<span class="font-label-caps text-label-caps">Browser</span>
+</a>
+</nav>
+<!-- Footer Tabs -->
+<div class="border-t border-outline-variant p-2">
+<a class="text-on-surface-variant py-2 px-4 flex items-center gap-3 hover:bg-surface-container hover:text-on-surface rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="settings">settings</span>
+<span class="font-label-caps text-label-caps">Settings</span>
+</a>
+<a class="text-on-surface-variant py-2 px-4 flex items-center gap-3 hover:bg-surface-container hover:text-on-surface rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="help">help</span>
+<span class="font-label-caps text-label-caps">Support</span>
+</a>
+</div>
+</aside>
+<!-- CENTER CANVAS (Timeline) -->
+<main class="flex-1 flex flex-col bg-surface-container-lowest min-w-0 relative">
+<!-- Timeline Ruler -->
+<div class="h-8 bg-surface border-b border-outline-variant flex items-end px-4 font-label-mono-sm text-label-mono-sm text-on-surface-variant overflow-hidden select-none shrink-0 relative">
+<!-- Playhead Indicator -->
+<div class="absolute top-0 bottom-0 left-[35%] w-px bg-primary-container z-20 shadow-[0_0_8px_#00f5d4]">
+<div class="w-3 h-3 bg-primary-container absolute -top-1 -left-[5px] rotate-45"></div>
+</div>
+<div class="flex w-[200%] gap-12 border-b border-outline-variant/50 relative -bottom-px">
+<span class="relative">1<span class="absolute -bottom-1 left-1/2 w-px h-2 bg-outline-variant"></span></span>
+<span class="relative">2<span class="absolute -bottom-1 left-1/2 w-px h-2 bg-outline-variant"></span></span>
+<span class="relative">3<span class="absolute -bottom-1 left-1/2 w-px h-2 bg-outline-variant"></span></span>
+<span class="relative">4<span class="absolute -bottom-1 left-1/2 w-px h-2 bg-outline-variant"></span></span>
+<span class="relative text-primary-container">5<span class="absolute -bottom-1 left-1/2 w-px h-3 bg-primary-container"></span></span>
+<span class="relative">6<span class="absolute -bottom-1 left-1/2 w-px h-2 bg-outline-variant"></span></span>
+<span class="relative">7<span class="absolute -bottom-1 left-1/2 w-px h-2 bg-outline-variant"></span></span>
+<span class="relative">8<span class="absolute -bottom-1 left-1/2 w-px h-2 bg-outline-variant"></span></span>
+</div>
+</div>
+<!-- Tracks Area -->
+<div class="flex-1 overflow-y-auto overflow-x-hidden flex flex-col gap-1 p-2">
+<!-- Track 1: Vocal Lane -->
+<div class="flex h-32 bg-surface rounded-xl border border-primary-container/50 shadow-[inset_0_0_10px_rgba(0,245,212,0.1)] overflow-hidden shrink-0">
+<!-- Track Header -->
+<div class="w-48 bg-surface-container-low border-r border-outline-variant p-3 flex flex-col justify-between relative shrink-0">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary-container"></div>
+<div class="flex items-center justify-between">
+<span class="font-headline-md text-sm font-semibold text-primary-container truncate">🎙 Vocal Lane</span>
+<button class="text-on-surface-variant hover:text-on-surface"><span class="material-symbols-outlined text-sm" data-icon="more_vert">more_vert</span></button>
+</div>
+<div class="flex gap-1 mt-2">
+<button class="w-6 h-6 rounded bg-surface-variant text-[10px] font-bold text-on-surface-variant hover:bg-primary-container/20 hover:text-primary-container flex items-center justify-center border border-outline-variant">M</button>
+<button class="w-6 h-6 rounded bg-surface-variant text-[10px] font-bold text-on-surface-variant hover:bg-secondary-container/20 hover:text-secondary-container flex items-center justify-center border border-outline-variant">S</button>
+<button class="w-6 h-6 rounded bg-error/20 text-[10px] font-bold text-error flex items-center justify-center border border-error">R</button>
+</div>
+<!-- Mini Meter -->
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full mt-2 overflow-hidden flex">
+<div class="h-full bg-primary-container w-[70%]"></div>
+<div class="h-full bg-secondary-container w-[15%]"></div>
+</div>
+</div>
+<!-- Track Canvas -->
+<div class="flex-1 relative bg-surface-container-lowest overflow-hidden flex items-center px-4">
+<div class="absolute inset-0 bg-[linear-gradient(rgba(58,74,70,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(58,74,70,0.1)_1px,transparent_1px)] bg-[size:100%_25%,20px_100%] pointer-events-none"></div>
+<!-- Playhead Line -->
+<div class="absolute top-0 bottom-0 left-[35%] w-px bg-primary-container/50 z-10"></div>
+<!-- Clip -->
+<div class="relative h-24 w-[60%] left-[10%] bg-surface-variant rounded-lg border border-primary-container overflow-hidden group cursor-pointer">
+<!-- Drag Handles -->
+<div class="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-primary-container z-20 cursor-nwse-resize opacity-0 group-hover:opacity-100"></div>
+<div class="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-primary-container z-20 cursor-nesw-resize opacity-0 group-hover:opacity-100"></div>
+<!-- Envelope Line -->
+<svg class="absolute inset-0 w-full h-full z-10 pointer-events-none" preserveaspectratio="none">
+<path d="M0,40 L100,20 L300,20 L400,60 L800,60" fill="none" stroke="#00f5d4" stroke-width="1.5" vector-effect="non-scaling-stroke"></path>
+<circle class="opacity-0 group-hover:opacity-100" cx="100" cy="20" fill="#00f5d4" r="3"></circle>
+<circle class="opacity-0 group-hover:opacity-100" cx="300" cy="20" fill="#00f5d4" r="3"></circle>
+<circle class="opacity-0 group-hover:opacity-100" cx="400" cy="60" fill="#00f5d4" r="3"></circle>
+</svg>
+<!-- Dual Channel Waveform -->
+<div class="h-1/2 w-full border-b border-outline-variant/30 flex items-center px-1">
+<div class="h-6 w-full waveform-teal opacity-80"></div>
+</div>
+<div class="h-1/2 w-full flex items-center px-1">
+<div class="h-6 w-full waveform-teal opacity-80 scale-y-[-1]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Track 2: Raddah Layer -->
+<div class="flex h-24 bg-surface rounded-xl border border-outline-variant overflow-hidden shrink-0 opacity-90 hover:opacity-100 transition-opacity">
+<!-- Track Header -->
+<div class="w-48 bg-surface-container-low border-r border-outline-variant p-3 flex flex-col justify-between relative shrink-0">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary-container/50"></div>
+<div class="flex flex-col">
+<span class="font-headline-md text-sm font-semibold text-secondary-container truncate">👥 Raddah Layer · ردّة</span>
+<span class="text-[9px] uppercase tracking-wider text-secondary-container bg-secondary-container/10 px-1 py-0.5 rounded w-max mt-1 border border-secondary-container/30">Majlis Core Effect Active</span>
+</div>
+<div class="flex gap-1 mt-auto">
+<button class="w-6 h-6 rounded bg-surface-variant text-[10px] font-bold text-on-surface-variant hover:bg-primary-container/20 hover:text-primary-container flex items-center justify-center border border-outline-variant">M</button>
+<button class="w-6 h-6 rounded bg-surface-variant text-[10px] font-bold text-on-surface-variant hover:bg-secondary-container/20 hover:text-secondary-container flex items-center justify-center border border-outline-variant">S</button>
+<button class="w-6 h-6 rounded bg-surface-variant text-[10px] font-bold text-on-surface-variant hover:bg-error/20 hover:text-error flex items-center justify-center border border-outline-variant">R</button>
+</div>
+</div>
+<!-- Track Canvas -->
+<div class="flex-1 relative bg-surface-container-lowest overflow-hidden flex items-center px-4">
+<div class="absolute inset-0 bg-[linear-gradient(rgba(58,74,70,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(58,74,70,0.1)_1px,transparent_1px)] bg-[size:100%_25%,20px_100%] pointer-events-none"></div>
+<div class="absolute top-0 bottom-0 left-[35%] w-px bg-primary-container/50 z-10"></div>
+<!-- Clip -->
+<div class="relative h-16 w-[40%] left-[25%] bg-surface-variant rounded-lg border border-secondary-container/50 overflow-hidden shadow-[inset_0_0_15px_rgba(251,180,0,0.05)]">
+<div class="absolute inset-0 flex items-center justify-center opacity-30">
+<!-- Simple representation of complex waveform -->
+<div class="h-10 w-[95%] waveform-gold"></div>
+</div>
+<div class="absolute bottom-1 right-2 text-[8px] text-secondary-container opacity-50 font-label-mono-sm">VOL: -4.2dB</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- RIGHT SIDEBAR (Properties & Atmosphere) -->
+<aside class="w-[340px] bg-surface shrink-0 border-l border-outline-variant flex flex-col z-30 overflow-y-auto">
+<!-- Header -->
+<div class="p-4 border-b border-outline-variant sticky top-0 bg-surface/90 backdrop-blur z-10">
+<h3 class="font-headline-md text-base text-on-surface flex items-center justify-between">
+                    Properties &amp; Atmosphere
+                    <span class="material-symbols-outlined text-sm text-on-surface-variant" data-icon="info">info</span>
+</h3>
+</div>
+<div class="p-4 flex flex-col gap-6">
+<!-- Top: Basic Clip Props -->
+<div class="bg-surface-container rounded-xl p-3 border border-outline-variant">
+<div class="grid grid-cols-2 gap-4">
+<div class="flex flex-col gap-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant">Clip Volume</label>
+<div class="flex items-center gap-2">
+<input class="w-full h-1 bg-surface-variant rounded-lg appearance-none cursor-pointer accent-primary-container" type="range" value="80"/>
+<span class="font-label-mono-sm text-xs text-primary-container">0.0</span>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant">Fade In/Out</label>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-on-surface-variant" data-icon="ramp_right">ramp_right</span>
+<input class="bg-surface-container-lowest border border-outline-variant rounded text-xs px-2 py-1 w-full text-center font-label-mono-sm focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none" type="text" value="12ms / 45ms"/>
+</div>
+</div>
+</div>
+</div>
+<!-- Middle: Effects Rack -->
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<h4 class="font-label-caps text-label-caps text-on-surface-variant tracking-widest">EFFECTS RACK</h4>
+<button class="text-primary-container text-xs hover:underline">+ Add Node</button>
+</div>
+<div class="flex flex-col gap-1">
+<!-- Node 1 -->
+<div class="bg-surface-container-high rounded-lg p-2 border border-outline-variant flex items-center justify-between hover:border-primary-container/50 transition-colors group cursor-pointer">
+<div class="flex items-center gap-2">
+<div class="w-4 h-4 rounded bg-primary-container flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[12px] font-bold" data-icon="check">check</span>
+</div>
+<span class="text-sm font-medium text-on-surface group-hover:text-primary-container transition-colors">Low Cut</span>
+</div>
+<span class="material-symbols-outlined text-sm text-on-surface-variant" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<!-- Flow arrow -->
+<div class="w-full flex justify-center py-0.5"><div class="w-px h-3 bg-outline-variant"></div></div>
+<!-- Node 2 -->
+<div class="bg-surface-container-high rounded-lg p-2 border border-outline-variant flex items-center justify-between hover:border-primary-container/50 transition-colors group cursor-pointer">
+<div class="flex items-center gap-2">
+<div class="w-4 h-4 rounded bg-primary-container flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[12px] font-bold" data-icon="check">check</span>
+</div>
+<span class="text-sm font-medium text-on-surface group-hover:text-primary-container transition-colors">EQ: Presence/Air</span>
+</div>
+<span class="material-symbols-outlined text-sm text-on-surface-variant" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<!-- Flow arrow -->
+<div class="w-full flex justify-center py-0.5"><div class="w-px h-3 bg-outline-variant"></div></div>
+<!-- Node 3 -->
+<div class="bg-surface-container-high rounded-lg p-2 border border-outline-variant flex items-center justify-between hover:border-primary-container/50 transition-colors group cursor-pointer">
+<div class="flex items-center gap-2">
+<div class="w-4 h-4 rounded bg-primary-container flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[12px] font-bold" data-icon="check">check</span>
+</div>
+<span class="text-sm font-medium text-on-surface group-hover:text-primary-container transition-colors">Dynamic Compressor</span>
+</div>
+<span class="material-symbols-outlined text-sm text-on-surface-variant" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<!-- Flow arrow -->
+<div class="w-full flex justify-center py-0.5"><div class="w-px h-3 bg-outline-variant"></div></div>
+<!-- Node 4 (Active/Highlighted) -->
+<div class="bg-surface-container-highest rounded-lg p-2 border-l-2 border-l-secondary-container border border-outline-variant flex items-center justify-between shadow-[inset_0_0_10px_rgba(251,180,0,0.05)] cursor-pointer">
+<div class="flex items-center gap-2">
+<div class="w-4 h-4 rounded bg-secondary-container flex items-center justify-center text-on-secondary-container">
+<span class="material-symbols-outlined text-[12px] font-bold" data-icon="check">check</span>
+</div>
+<span class="text-sm font-semibold text-secondary-container">Convolution Space: Majlis</span>
+</div>
+<span class="material-symbols-outlined text-sm text-secondary-container/70" data-icon="settings">settings</span>
+</div>
+</div>
+</div>
+<div class="w-full h-px bg-outline-variant my-2"></div>
+<!-- Bottom: Live Audience Engine Widget -->
+<div class="bg-surface-container-lowest border border-secondary-container/30 rounded-xl overflow-hidden relative">
+<!-- Subtle gold glow background -->
+<div class="absolute inset-0 bg-secondary-container/5 pointer-events-none"></div>
+<div class="p-3 bg-surface-container border-b border-outline-variant flex justify-between items-center relative z-10">
+<div class="flex flex-col">
+<span class="font-headline-md text-sm font-bold text-secondary-container">LIVE AUDIENCE ENGINE</span>
+<span class="font-label-caps text-xs text-secondary-container opacity-70 font-sans" dir="rtl">محرك الجمهور الحي</span>
+</div>
+<!-- Toggle Switch -->
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-9 h-5 bg-surface-variant rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:border-outline-variant after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-secondary-container"></div>
+</label>
+</div>
+<div class="p-4 flex flex-col gap-4 relative z-10">
+<!-- Checkbox -->
+<label class="flex items-center gap-3 cursor-pointer group">
+<div class="w-4 h-4 rounded border border-secondary-container bg-secondary-container/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-secondary-container font-bold" data-icon="check">check</span>
+</div>
+<span class="text-sm text-on-surface group-hover:text-secondary-fixed-dim transition-colors">Designate as Crowd Take (ردّة)</span>
+</label>
+<!-- Sliders & Meters -->
+<div class="flex gap-4 items-end mt-2">
+<!-- Crowd Volume -->
+<div class="flex-1 flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<label class="font-label-caps text-label-caps text-on-surface-variant">Crowd Vol</label>
+<span class="font-label-mono-sm text-xs text-secondary-container">-6.0 dB</span>
+</div>
+<div class="relative w-full h-2 bg-surface-variant rounded-full overflow-hidden">
+<div class="absolute top-0 left-0 h-full bg-gradient-to-r from-primary-container via-secondary-container to-error w-[75%] rounded-full shadow-[0_0_5px_#fbb400]"></div>
+</div>
+</div>
+<!-- Digital Meter vertical -->
+<div class="w-3 h-16 bg-surface-variant rounded flex flex-col justify-end p-[1px] gap-[1px]">
+<div class="w-full h-[2px] bg-error opacity-20"></div>
+<div class="w-full h-[2px] bg-error opacity-20"></div>
+<div class="w-full h-[2px] bg-secondary-container opacity-90"></div>
+<div class="w-full h-[2px] bg-secondary-container opacity-90"></div>
+<div class="w-full h-[2px] bg-secondary-container opacity-90"></div>
+<div class="w-full h-[2px] bg-primary-container opacity-90"></div>
+<div class="w-full h-[2px] bg-primary-container opacity-90"></div>
+<div class="w-full h-[2px] bg-primary-container opacity-90"></div>
+<div class="w-full h-[2px] bg-primary-container opacity-90"></div>
+<div class="w-full h-[2px] bg-primary-container opacity-90"></div>
+</div>
+</div>
+<div class="flex flex-col gap-2 mt-2">
+<div class="flex justify-between items-center">
+<label class="font-label-caps text-label-caps text-on-surface-variant">Ducking Depth</label>
+<span class="font-label-mono-sm text-xs text-on-surface">45%</span>
+</div>
+<input class="w-full h-1 bg-surface-variant rounded-lg appearance-none cursor-pointer accent-secondary-container" type="range" value="45"/>
+</div>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</body></html>

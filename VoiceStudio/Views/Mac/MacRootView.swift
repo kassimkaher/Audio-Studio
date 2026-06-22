@@ -4,6 +4,7 @@ import SwiftUI
 /// Desktop shell: a projects sidebar and the multi-track editor detail.
 struct MacRootView: View {
     @EnvironmentObject private var env: AppEnvironment
+    @EnvironmentObject private var recordingService: RecordingService
     @State private var projects: [Project] = []
     @State private var selectedID: Project.ID?
     @State private var editor: ProjectEditorViewModel?
@@ -15,7 +16,11 @@ struct MacRootView: View {
 
     var body: some View {
         NavigationSplitView {
-            sidebar
+            WorkspaceSidebar(projects: $projects, selectedID: $selectedID, editor: editor,
+                             onNew: { promptNewProject() },
+                             onRename: { renameTarget = $0; renameText = $0.name },
+                             onDelete: { delete($0) },
+                             onDeleteMany: { deleteMany($0) })
                 .frame(minWidth: 240)
         } detail: {
             if let editor {
@@ -25,6 +30,18 @@ struct MacRootView: View {
             }
         }
         .frame(minWidth: 940, minHeight: 580)
+        // Crimson hairline frames the whole window while recording (Zone 1 cue).
+        .overlay {
+            if recordingService.isRecording {
+                RoundedRectangle(cornerRadius: 10)
+                    .strokeBorder(Theme.recordRed, lineWidth: 2)
+                    .shadow(color: Theme.recordRed.opacity(0.6), radius: 6)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: recordingService.isRecording)
         .onAppear {
             if env.resetForTesting && !didReset {
                 env.projectStore.allProjects().forEach { env.projectStore.delete($0) }
@@ -44,37 +61,6 @@ struct MacRootView: View {
             TextField("Project name", text: $renameText)
             Button("Save") { commitRename() }
             Button("Cancel", role: .cancel) { renameTarget = nil }
-        }
-    }
-
-    private var sidebar: some View {
-        List(selection: $selectedID) {
-            Section("Projects") {
-                ForEach(projects) { project in
-                    HStack(spacing: 10) {
-                        Image(systemName: "waveform").foregroundStyle(Theme.accent)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(project.name).font(.body)
-                            Text("\(project.tracks.count) tracks · \(formatTime(project.duration))")
-                                .font(.caption).foregroundStyle(Theme.textSecondary)
-                        }
-                    }
-                    .tag(project.id)
-                    .contextMenu {
-                        Button { renameTarget = project; renameText = project.name } label: { Label("Rename", systemImage: "pencil") }
-                        Divider()
-                        Button(role: .destructive) { delete(project) } label: { Label("Delete Project", systemImage: "trash") }
-                    }
-                }
-            }
-        }
-        .listStyle(.sidebar)
-        .safeAreaInset(edge: .bottom) {
-            Button { promptNewProject() } label: {
-                Label("New Project", systemImage: "plus").frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent).tint(Theme.accent)
-            .padding(8)
         }
     }
 
@@ -129,6 +115,13 @@ struct MacRootView: View {
     private func delete(_ project: Project) {
         env.projectStore.delete(project)
         if selectedID == project.id { selectedID = nil; editor = nil }
+        reload()
+    }
+
+    private func deleteMany(_ ids: [Project.ID]) {
+        let set = Set(ids)
+        for project in projects where set.contains(project.id) { env.projectStore.delete(project) }
+        if let sel = selectedID, set.contains(sel) { selectedID = nil; editor = nil }
         reload()
     }
 }

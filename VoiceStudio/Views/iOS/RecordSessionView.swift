@@ -31,6 +31,7 @@ struct RecordSessionView: View {
                         if vm.hasTake { takeActions } else {
                             inputSourceCard
                             monitorRow
+                            audienceCard
                         }
                         presetSection
                         mixSection
@@ -123,6 +124,10 @@ struct RecordSessionView: View {
                     .pickerStyle(.menu).tint(Theme.accent)
                 }
                 if vm.isOverdubTake { syncTuner }
+                Toggle(isOn: Binding(get: { vm.isCrowdDesignatedTake }, set: { vm.isCrowdDesignatedTake = $0 })) {
+                    Label("Crowd / Raddah Take", systemImage: "person.2.wave.2.fill")
+                }
+                .tint(Theme.accent)
                 HStack(spacing: 12) {
                     Button { vm.togglePreview() } label: {
                         Label(playback.isPlaying ? "Stop" : "Listen",
@@ -194,6 +199,16 @@ struct RecordSessionView: View {
             }
             .tint(Theme.accent)
         }
+    }
+
+    /// Live Audience / Majlis atmosphere: crowd bed + auto-ducking under the voice.
+    private var audienceCard: some View {
+        AudienceControlsView(
+            enabled: Binding(get: { vm.audienceModeEnabled }, set: { vm.audienceModeEnabled = $0 }),
+            crowdVolume: Binding(get: { vm.crowdVolume }, set: { vm.crowdVolume = $0 }),
+            duckingAmountDb: Binding(get: { vm.duckingAmountDb }, set: { vm.duckingAmountDb = $0 }),
+            sensitivity: Binding(get: { vm.duckingSensitivity }, set: { vm.duckingSensitivity = $0 }),
+            designateAsCrowdTake: Binding(get: { vm.isCrowdDesignatedTake }, set: { vm.isCrowdDesignatedTake = $0 }))
     }
 
     private var presetSection: some View {

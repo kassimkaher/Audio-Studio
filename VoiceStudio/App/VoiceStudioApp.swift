@@ -15,10 +15,12 @@ struct VoiceStudioApp: App {
                 .environmentObject(environment.engineController)
                 .environmentObject(environment.presetStore)
                 .environmentObject(environment.irLoader)
+                .environmentObject(environment.mobileLink)
                 .preferredColorScheme(.dark)
         }
         #if os(macOS)
         .defaultSize(width: 1180, height: 760)
+        .windowStyle(.hiddenTitleBar)        // remove the floating native title ("T")
         .commands { VoiceStudioCommands() }
         #endif
     }

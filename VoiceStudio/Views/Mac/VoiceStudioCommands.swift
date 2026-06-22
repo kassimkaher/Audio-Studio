@@ -14,6 +14,8 @@ extension Notification.Name {
     static let vsCopy        = Notification.Name("vs.copy")
     static let vsPaste       = Notification.Name("vs.paste")
     static let vsDuplicate   = Notification.Name("vs.duplicate")
+    static let vsUndo        = Notification.Name("vs.undo")
+    static let vsRedo        = Notification.Name("vs.redo")
 }
 
 struct VoiceStudioCommands: Commands {
@@ -23,6 +25,10 @@ struct VoiceStudioCommands: Commands {
         CommandGroup(replacing: .newItem) {
             Button("New Project") { post(.vsNewProject) }
                 .keyboardShortcut("n", modifiers: .command)
+        }
+        CommandGroup(replacing: .undoRedo) {
+            Button("Undo") { post(.vsUndo) }.keyboardShortcut("z", modifiers: .command)
+            Button("Redo") { post(.vsRedo) }.keyboardShortcut("z", modifiers: [.command, .shift])
         }
         // Copy / Paste / Duplicate for the selected clip or track.
         CommandGroup(replacing: .pasteboard) {

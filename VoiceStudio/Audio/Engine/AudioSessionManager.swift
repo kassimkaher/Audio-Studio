@@ -35,6 +35,35 @@ final class AudioSessionManager: ObservableObject {
 
     private var observers: [NSObjectProtocol] = []
 
+    // ===================================================== Mobile mic link ===
+    /// The synthetic UID for the "📱 iPhone (Wi-Fi)" virtual input.
+    static let mobileInputUID = "mobile.wifi"
+    /// True while a phone is linked over the local network (drives the picker).
+    @Published private(set) var mobileLinkConnected = false
+    /// True when the mobile-mic virtual input is the active capture source — read
+    /// by `AudioEngineController.prepare` to tap the stream instead of hardware.
+    private(set) var useMobileCapture = false
+
+    /// Called by `MobileLinkService` when the phone connects/disconnects.
+    func setMobileLinkConnected(_ connected: Bool) {
+        mobileLinkConnected = connected
+        if !connected, useMobileCapture {
+            useMobileCapture = false
+            selectedInputUID = availableInputs.first(where: { $0.id != Self.mobileInputUID })?.id
+        }
+        refreshInputs()
+        configurationChanged.send(())
+    }
+
+    /// Prepends the mobile-mic entry to the input list while a phone is linked.
+    private func injectMobileOption() {
+        guard mobileLinkConnected else { return }
+        guard !availableInputs.contains(where: { $0.id == Self.mobileInputUID }) else { return }
+        availableInputs.insert(InputOption(id: Self.mobileInputUID,
+                                           name: "📱 iPhone (Wi-Fi)",
+                                           symbol: "wave.3.right"), at: 0)
+    }
+
     // ============================================================== iOS ====
     #if os(iOS)
     private let session = AVAudioSession.sharedInstance()
@@ -103,9 +132,14 @@ final class AudioSessionManager: ObservableObject {
         selectedInputUID = session.preferredInput?.uid
             ?? session.currentRoute.inputs.first?.uid
             ?? availableInputs.first?.id
+        injectMobileOption()
     }
 
     func selectInput(uid: String) {
+        if uid == Self.mobileInputUID {
+            useMobileCapture = true; selectedInputUID = uid; configurationChanged.send(()); return
+        }
+        useMobileCapture = false
         guard let port = session.availableInputs?.first(where: { $0.uid == uid }) else { return }
         try? session.setPreferredInput(port)
         selectedInputUID = uid
@@ -170,10 +204,13 @@ final class AudioSessionManager: ObservableObject {
     private(set) var selectedInputDeviceID: AudioDeviceID?
     private(set) var selectedOutputDeviceID: AudioDeviceID?
 
-    private var deviceListenerAddress = AudioObjectPropertyAddress(
-        mSelector: kAudioHardwarePropertyDevices,
-        mScope: kAudioObjectPropertyScopeGlobal,
-        mElement: kAudioObjectPropertyElementMain)
+    // HAL property selectors we observe: device list changes (plug/unplug, an
+    // iPhone Continuity mic appearing) and default-device changes.
+    private var halSelectors: [AudioObjectPropertySelector] = [
+        kAudioHardwarePropertyDevices,
+        kAudioHardwarePropertyDefaultInputDevice,
+        kAudioHardwarePropertyDefaultOutputDevice
+    ]
 
     init() {
         refreshPermission()
@@ -182,11 +219,18 @@ final class AudioSessionManager: ObservableObject {
             forName: .AVAudioEngineConfigurationChange, object: nil, queue: .main) { [weak self] _ in
                 self?.refreshInputs(); self?.configurationChanged.send(())
             })
-        // Refresh the device menus whenever hardware is plugged/unplugged.
-        AudioObjectAddPropertyListenerBlock(
-            AudioObjectID(kAudioObjectSystemObject), &deviceListenerAddress, DispatchQueue.main) { [weak self] _, _ in
-                Task { @MainActor in self?.refreshInputs() }
-            }
+        // Live HAL listeners: refresh the In/Out pickers the instant a device is
+        // connected/disconnected or the system default changes — without
+        // interrupting the active audio context.
+        for selector in halSelectors {
+            var addr = AudioObjectPropertyAddress(mSelector: selector,
+                                                  mScope: kAudioObjectPropertyScopeGlobal,
+                                                  mElement: kAudioObjectPropertyElementMain)
+            AudioObjectAddPropertyListenerBlock(
+                AudioObjectID(kAudioObjectSystemObject), &addr, DispatchQueue.main) { [weak self] _, _ in
+                    Task { @MainActor in self?.refreshInputs() }
+                }
+        }
     }
     deinit { observers.forEach { NotificationCenter.default.removeObserver($0) } }
 
@@ -227,9 +271,29 @@ final class AudioSessionManager: ObservableObject {
         if selectedOutputUID == nil { selectedOutputUID = availableOutputs.first?.id }
         selectedInputDeviceID = selectedInputUID.flatMap { CoreAudioDevices.deviceID(forUID: $0) }
         selectedOutputDeviceID = selectedOutputUID.flatMap { CoreAudioDevices.deviceID(forUID: $0) }
+        injectMobileOption()
+        refreshInputGain()
+    }
+
+    /// Hardware input gain (0…1) of the selected input device, nil if the device
+    /// doesn't expose one. Lower it to stop a too-hot mic from clipping.
+    @Published private(set) var inputGain: Float?
+
+    func refreshInputGain() {
+        inputGain = selectedInputDeviceID.flatMap { CoreAudioDevices.inputVolume($0) }
+    }
+
+    func setInputGain(_ value: Float) {
+        guard let id = selectedInputDeviceID else { return }
+        CoreAudioDevices.setInputVolume(value, id)
+        inputGain = CoreAudioDevices.inputVolume(id) ?? value
     }
 
     func selectInput(uid: String) {
+        if uid == Self.mobileInputUID {
+            useMobileCapture = true; selectedInputUID = uid; configurationChanged.send(()); return
+        }
+        useMobileCapture = false
         selectedInputUID = uid
         selectedInputDeviceID = CoreAudioDevices.deviceID(forUID: uid)
         // Steer the engine via the system default input (reliable on macOS).

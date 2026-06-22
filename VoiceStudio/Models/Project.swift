@@ -53,8 +53,9 @@ struct Project: Identifiable, Codable, Hashable {
     /// Appends a new empty track and returns its id.
     @discardableResult
     mutating func addTrack(kind: TrackKind = .vocal, name: String? = nil) -> UUID {
-        let n = name ?? "Track \(tracks.count + 1)"
-        let track = Track(name: n, kind: kind)
+        // Bilingual default names per the Sacred Audio DAW identity.
+        let fallback = kind == .background ? "Raddah · ردّة \(tracks.count + 1)" : "Lane \(tracks.count + 1)"
+        let track = Track(name: name ?? fallback, kind: kind)
         tracks.append(track)
         return track.id
     }
@@ -99,6 +100,6 @@ struct Project: Identifiable, Codable, Hashable {
 
     /// A fresh project with a single empty track to start from.
     static func makeDefault(name: String = "New Project") -> Project {
-        Project(name: name, tracks: [Track(name: "Track 1", kind: .vocal)])
+        Project(name: name, tracks: [Track(name: "Lead Lane", kind: .vocal)])
     }
 }

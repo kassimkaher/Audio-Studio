@@ -24,16 +24,16 @@ final class PlaybackService: ObservableObject {
         let player: AVAudioPlayerNode
         let clip: Clip
         let sourceRate: Double
+        let file: AVAudioFile        // a per-clip file (own read head — never shared)
     }
     private struct TrackGraph {
         let sumMixer: AVAudioMixerNode
-        let masterChain: ProcessingChain
+        let masterChain: ProcessingChain?    // nil when the track has no effects (cheap path)
         let gainMixer: AVAudioMixerNode
         var clipNodes: [ClipNode]
     }
     private var trackGraphs: [UUID: TrackGraph] = [:]
     private var clipChains: [UUID: ProcessingChain] = [:]   // clipID → chain (live updates)
-    private var openFiles: [UUID: AVAudioFile] = [:]   // sourceID → file
     private var leadPlayer: AVAudioPlayerNode?
     private var project: Project?
     private var startFrame: AVAudioFramePosition = 0
@@ -152,10 +152,14 @@ final class PlaybackService: ObservableObject {
 
             var clipNodes: [ClipNode] = []
             for clip in track.clips {
-                guard let file = file(for: clip.sourceID, project: project) else { continue }
+                // Fresh file per clip — sharing one AVAudioFile across players makes
+                // all but one render silence (duplicated takes would vanish).
+                guard let source = project.source(for: clip.sourceID),
+                      let file = try? AVAudioFile(forReading: source.url) else { continue }
                 let fileFormat = file.processingFormat
                 let player = AVAudioPlayerNode()
                 engine.attach(player)
+                player.volume = max(0, min(clip.gain, 2))   // clip gain envelope → player volume
 
                 if let clipSpec = clip.effectChain {
                     let proc = AVAudioFormat(standardFormatWithSampleRate: fileFormat.sampleRate,
@@ -168,14 +172,25 @@ final class PlaybackService: ObservableObject {
                 } else {
                     engine.connect(player, to: sumMixer, format: fileFormat)
                 }
-                clipNodes.append(ClipNode(player: player, clip: clip, sourceRate: fileFormat.sampleRate))
+                clipNodes.append(ClipNode(player: player, clip: clip,
+                                          sourceRate: fileFormat.sampleRate, file: file))
                 if leadPlayer == nil { leadPlayer = player }
             }
 
-            // Track master chain over the summed clips.
-            let masterChain = ProcessingChain(spec: track.effectChain)
-            let masterOut = masterChain.install(into: engine, source: sumMixer,
-                                                sourceFormat: masterFormat, processingFormat: masterFormat)
+            // Track master chain over the summed clips — but skip the whole
+            // dry/wet split (4 mixers) when the track has no effects, so a project
+            // with many plain tracks stays light on the render thread.
+            let masterChain: ProcessingChain?
+            let masterOut: AVAudioNode
+            if track.effectChain.stages.isEmpty {
+                masterChain = nil
+                masterOut = sumMixer
+            } else {
+                let chain = ProcessingChain(spec: track.effectChain)
+                masterOut = chain.install(into: engine, source: sumMixer,
+                                          sourceFormat: masterFormat, processingFormat: masterFormat)
+                masterChain = chain
+            }
             engine.connect(masterOut, to: gainMixer, format: masterFormat)
             engine.connect(gainMixer, to: engine.mainMixerNode, format: masterFormat)
             gainMixer.outputVolume = project.isAudible(track) ? track.volume : 0
@@ -193,16 +208,7 @@ final class PlaybackService: ObservableObject {
         }
         trackGraphs.removeAll()
         clipChains.removeAll()
-        openFiles.removeAll()
         leadPlayer = nil
-    }
-
-    private func file(for sourceID: UUID, project: Project) -> AVAudioFile? {
-        if let f = openFiles[sourceID] { return f }
-        guard let source = project.source(for: sourceID),
-              let file = try? AVAudioFile(forReading: source.url) else { return nil }
-        openFiles[sourceID] = file
-        return file
     }
 
     private func scheduleClips(from frame: AVAudioFramePosition) {
@@ -211,14 +217,19 @@ final class PlaybackService: ObservableObject {
             guard let graph = trackGraphs[track.id] else { continue }
             for node in graph.clipNodes {
                 let clip = node.clip
-                guard clip.timelineEndFrame > frame,
-                      let file = file(for: clip.sourceID, project: project) else { continue }
+                guard clip.timelineEndFrame > frame else { continue }
+                let file = node.file
+                // `skip` is in PROJECT frames; converting into the source's own
+                // rate before indexing the file (handles 44.1 kHz takes in a
+                // 48 kHz project). The `at:` time is in project/render frames.
+                let rateRatio = node.sourceRate / project.sampleRate
                 let skip = max(0, frame - clip.timelineStartFrame)
-                let startInSource = clip.sourceInFrame + skip
-                let framesToPlay = clip.frameLength - skip
+                let skipInSource = AVAudioFramePosition(Double(skip) * rateRatio)
+                let startInSource = clip.sourceInFrame + skipInSource
+                let framesToPlay = clip.frameLength - skipInSource
                 guard framesToPlay > 0 else { continue }
                 let when = AVAudioTime(sampleTime: clip.timelineStartFrame + skip - frame,
-                                       atRate: node.sourceRate)
+                                       atRate: project.sampleRate)
                 node.player.scheduleSegment(file,
                                             startingFrame: startInSource,
                                             frameCount: AVAudioFrameCount(framesToPlay),
@@ -241,7 +252,16 @@ final class PlaybackService: ObservableObject {
     }
 
     func updateChain(for trackID: UUID, spec: EffectChainSpec) {
-        trackGraphs[trackID]?.masterChain.update(spec: spec)
+        trackGraphs[trackID]?.masterChain?.update(spec: spec)
+    }
+
+    /// Live clip-gain (volume riding) — applied to the clip's player instantly
+    /// while dragging the gain envelope, no rebuild.
+    func setClipGain(_ clipID: UUID, _ gain: Float) {
+        let v = max(0, min(gain, 2))
+        for graph in trackGraphs.values {
+            for node in graph.clipNodes where node.clip.id == clipID { node.player.volume = v }
+        }
     }
 
     /// Live-updates a clip's per-clip effect parameters while it is playing

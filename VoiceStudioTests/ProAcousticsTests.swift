@@ -63,6 +63,12 @@ final class ConvolutionSpecTests: XCTestCase {
         let conv = PresetLibrary.hussainiPro.chain.stages.first { $0.kind == .convolutionReverb }
         XCTAssertEqual(conv?.stringParams?[ParamKeys.ir], "HussainiHall")
     }
+
+    func testLiveMajlisPresetUsesCrowdIR() {
+        XCTAssertTrue(PresetLibrary.all.contains { $0.id == PresetLibrary.liveMajlis.id })
+        let conv = PresetLibrary.liveMajlis.chain.stages.first { $0.kind == .convolutionReverb }
+        XCTAssertEqual(conv?.stringParams?[ParamKeys.ir], "LiveMajlis")
+    }
 }
 
 final class StyleTransferTests: XCTestCase {

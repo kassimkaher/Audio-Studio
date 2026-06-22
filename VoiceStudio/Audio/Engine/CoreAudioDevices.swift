@@ -50,6 +50,40 @@ enum CoreAudioDevices {
         return status == noErr
     }
 
+    // MARK: Input gain (to tame a too-hot mic that clips at the ADC)
+
+    private static let inputElements: [AudioObjectPropertyElement] =
+        [kAudioObjectPropertyElementMain, 1, 2]
+
+    /// Reads the input device's volume scalar (0…1), or nil if unsupported.
+    static func inputVolume(_ id: AudioDeviceID) -> Float? {
+        for el in inputElements {
+            var addr = AudioObjectPropertyAddress(mSelector: kAudioDevicePropertyVolumeScalar,
+                                                  mScope: kAudioObjectPropertyScopeInput, mElement: el)
+            guard AudioObjectHasProperty(id, &addr) else { continue }
+            var vol = Float(0); var size = UInt32(MemoryLayout<Float>.size)
+            if AudioObjectGetPropertyData(id, &addr, 0, nil, &size, &vol) == noErr { return vol }
+        }
+        return nil
+    }
+
+    /// Sets the input device's volume scalar (0…1) on whatever element(s) accept it.
+    @discardableResult
+    static func setInputVolume(_ scalar: Float, _ id: AudioDeviceID) -> Bool {
+        var v = max(0, min(scalar, 1))
+        let size = UInt32(MemoryLayout<Float>.size)
+        var ok = false
+        for el in inputElements {
+            var addr = AudioObjectPropertyAddress(mSelector: kAudioDevicePropertyVolumeScalar,
+                                                  mScope: kAudioObjectPropertyScopeInput, mElement: el)
+            var settable = DarwinBoolean(false)
+            guard AudioObjectHasProperty(id, &addr),
+                  AudioObjectIsPropertySettable(id, &addr, &settable) == noErr, settable.boolValue else { continue }
+            if AudioObjectSetPropertyData(id, &addr, 0, nil, size, &v) == noErr { ok = true }
+        }
+        return ok
+    }
+
     /// Sets the current hardware device on an AVAudioEngine I/O node's audio unit.
     static func setCurrentDevice(_ id: AudioDeviceID, onAudioUnit au: AudioUnit) {
         var dev = id

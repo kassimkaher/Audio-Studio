@@ -19,8 +19,25 @@ final class DirectConvolver {
     /// the audio thread).
     var maxFrames = 16_384
 
+    /// Real-time cap on IR taps. Direct (time-domain) convolution costs
+    /// `irLength` MACs *per output sample*, so a multi-second IR (100k+ taps) on
+    /// several tracks overruns the render budget and glitches ("robotic"). Capping
+    /// to ~0.25 s keeps the room character while staying real-time-safe when many
+    /// tracks each run a convolution.
+    /// Default real-time cap (~0.25 s @ 48 kHz). Offline export sets this to
+    /// `.max` to keep the full-length, full-quality reverb tail.
+    static let realtimeIRTaps = 12_000
+    var maxIRTaps = DirectConvolver.realtimeIRTaps
+
     func setIR(_ samples: [Float]) {
-        let normalized = samples.isEmpty ? [Float(0)] : samples
+        var normalized = samples.isEmpty ? [Float(0)] : samples
+        if normalized.count > maxIRTaps {
+            normalized = Array(normalized[0..<maxIRTaps])
+            // Fade the truncated tail so the cut doesn't click.
+            let fade = min(256, normalized.count)
+            let start = normalized.count - fade
+            for i in 0..<fade { normalized[start + i] *= Float(fade - i) / Float(fade) }
+        }
         irLength = normalized.count
         ir = normalized.reversed()
         history = [Float](repeating: 0, count: max(0, irLength - 1))
@@ -62,6 +79,8 @@ final class ConvolutionAudioUnit: AUAudioUnit {
 
     private var convolvers: [DirectConvolver] = []
     private let kernelLock = NSLock()
+    /// IR-tap cap applied to new convolvers. Real-time default; export sets `.max`.
+    var capIRTaps: Int = DirectConvolver.realtimeIRTaps
     /// 0...1 wet/dry. Read on the render thread; written from the main thread.
     private var _mix: Float = 1.0
     var mix: Float {
@@ -87,8 +106,9 @@ final class ConvolutionAudioUnit: AUAudioUnit {
     func setIR(_ samples: [Float]) {
         let channels = Int(format.channelCount)
         let mf = max(16_384, Int(maximumFramesToRender))
+        let cap = capIRTaps
         let new = (0..<channels).map { _ -> DirectConvolver in
-            let c = DirectConvolver(); c.maxFrames = mf; c.setIR(samples); return c
+            let c = DirectConvolver(); c.maxFrames = mf; c.maxIRTaps = cap; c.setIR(samples); return c
         }
         kernelLock.lock(); convolvers = new; kernelLock.unlock()
     }

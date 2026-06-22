@@ -28,6 +28,10 @@ struct Track: Identifiable, Codable, Hashable {
     /// The serialized effect chain applied to this track during playback and mixdown.
     var effectChain: EffectChainSpec
 
+    /// Record-arm: the armed track is the capture target for the next take.
+    /// **Transient** — excluded from `CodingKeys` so it never persists.
+    var isArmed: Bool = false
+
     init(id: UUID = UUID(),
          name: String,
          kind: TrackKind,
@@ -44,6 +48,11 @@ struct Track: Identifiable, Codable, Hashable {
         self.isMuted = isMuted
         self.isSoloed = isSoloed
         self.effectChain = effectChain
+    }
+
+    // `isArmed` intentionally omitted → transient, never encoded/decoded.
+    enum CodingKeys: String, CodingKey {
+        case id, name, kind, clips, volume, isMuted, isSoloed, effectChain
     }
 
     /// Last timeline frame occupied by any clip on this track.

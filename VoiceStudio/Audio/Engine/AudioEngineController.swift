@@ -1,6 +1,10 @@
 import Foundation
 import AVFoundation
 import Combine
+import Accelerate
+
+/// Which existing tracks the performer hears while recording (overdub monitor).
+enum MonitorScope: Equatable { case all, none, track(UUID) }
 
 /// Owns the live `AVAudioEngine` used for recording and real-time monitoring.
 ///
@@ -14,7 +18,12 @@ import Combine
 /// input IO entirely.
 @MainActor
 final class AudioEngineController: ObservableObject {
-    let engine = AVAudioEngine()
+    /// Recreated before each capture so `inputNode` binds to the *currently*
+    /// selected input device. A live AVAudioEngine on macOS does not rebind its
+    /// input when the default device changes, so reusing one instance would keep
+    /// capturing the launch-time device (e.g. built-in) even after the user picks
+    /// the iPhone / a USB mic. A fresh engine always follows the new default.
+    private(set) var engine = AVAudioEngine()
     private let sessionManager: AudioSessionManager
     private var chain: ProcessingChain?
     private var cancellables = Set<AnyCancellable>()
@@ -27,15 +36,53 @@ final class AudioEngineController: ObservableObject {
     private let monitorPlayer = AVAudioPlayerNode()
     private static let monitorConsumerKey = "monitor"
 
+    /// Virtual mobile-mic capture source (set by `AppEnvironment`). When the user
+    /// selects "📱 iPhone (Wi-Fi)", capture taps this stream instead of hardware.
+    weak var mobileCaptureSource: StreamInputNode?
+    /// The stream source feeds this mixer so the tap sits on a stable node.
+    private let captureMixer = AVAudioMixerNode()
+    /// The node currently carrying the input tap (hardware input or capture mixer).
+    private var tappedNode: AVAudioNode?
+
     /// Backing playback (existing project tracks) heard while overdubbing.
     private struct BackingItem {
         let player: AVAudioPlayerNode; let file: AVAudioFile
         let timelineStart: AVAudioFramePosition; let sourceIn: AVAudioFramePosition
         let frames: AVAudioFramePosition; let rate: Double
+        let trackID: UUID
     }
     private var backingItems: [BackingItem] = []
+    /// Which backing tracks are audible during the take (live-switchable).
+    private var backingScope: MonitorScope = .all
     private var backingProject: Project?
     private var backingFrom: AVAudioFramePosition = 0
+
+    // MARK: Live Audience / Majlis atmosphere engine
+    //
+    // A looping crowd ambience bed plays to the output (heard live, NOT captured
+    // — the mic tap is separate), and is auto-ducked by an envelope follower
+    // keyed off the input tap. AVAudioEngine's dynamics processor has no external
+    // sidechain, so this follower-from-the-tap is the correct way to sidechain on
+    // this stack: fast attack when the reciter is speaking, slow swell-back on the
+    // configured release when they pause.
+    private let crowdPlayer = AVAudioPlayerNode()
+    private let crowdMixer = AVAudioMixerNode()
+    private var crowdBuffer: AVAudioPCMBuffer?
+    private var crowdWired = false
+    private static let duckConsumerKey = "audienceDuck"
+
+    /// Master switch for the crowd lane (rebuild the graph when toggled).
+    var audienceModeEnabled = false
+    /// Base crowd-bed level (0...1) before ducking. Live-adjustable.
+    var crowdVolume: Float = 0.6
+    /// Attenuation applied to the crowd while the reciter is active (dB, negative).
+    var duckAmountDb: Float = -9
+    /// How quickly the crowd swells back when the reciter pauses (seconds).
+    var duckReleaseSeconds: Double = 1.7
+    /// Input peak above which the reciter is considered "active" (sensitivity).
+    var duckThreshold: Float = 0.04
+    /// Smoothed duck gain currently applied (1 = no duck). Audio-thread state.
+    private var duckGain: Float = 1.0
 
     @Published private(set) var isRunning = false
     @Published var isMonitoringEnabled = false {
@@ -83,13 +130,42 @@ final class AudioEngineController: ObservableObject {
         teardown()
         backingProject = backing
         backingFrom = frame
-        // macOS device routing is handled via the system default device
-        // (set in AudioSessionManager) — the engine follows it reliably. We do
-        // not poke the engine I/O units, which can silence the output.
-
-        let input = engine.inputNode
-        // Use the node's output format (post-session) for both connection and tap.
-        let format = input.outputFormat(forBus: 0)
+        // Rebind to the selected input device by starting from a fresh engine:
+        // a new AVAudioEngine's inputNode picks up the *current* default input
+        // (which AudioSessionManager.selectInput just set), so switching to the
+        // iPhone / a USB mic actually takes effect. We do not poke the I/O units
+        // directly (that can silence the output).
+        // Resolve the capture source: the Wi-Fi stream (virtual input) or hardware.
+        let captureNode: AVAudioNode
+        let format: AVAudioFormat
+        if sessionManager.useMobileCapture, let stream = mobileCaptureSource {
+            engine.attach(stream.sourceNode)
+            engine.attach(captureMixer)
+            engine.connect(stream.sourceNode, to: captureMixer, format: stream.format)
+            // Connect (silent) to the output so the engine pulls the source node —
+            // a tap alone won't drive a manual source. Monitoring, if enabled, is
+            // the separate monitorPlayer path.
+            engine.connect(captureMixer, to: engine.mainMixerNode, format: stream.format)
+            captureMixer.outputVolume = 0
+            // Tap the SOURCE node, not the muted mixer — a mixer tap captures the
+            // post-volume (zeroed) output, which would record silence.
+            captureNode = stream.sourceNode
+            format = stream.format
+        } else {
+            if !engine.isRunning { engine = AVAudioEngine() }   // rebind to current default input
+            let input = engine.inputNode
+            var f = input.outputFormat(forBus: 0)
+            // A Continuity mic can briefly report 0 channels right after selection;
+            // give it a moment to warm up rather than silently recording nothing.
+            if f.channelCount == 0 || f.sampleRate == 0 {
+                for _ in 0..<10 where f.channelCount == 0 || f.sampleRate == 0 {
+                    Thread.sleep(forTimeInterval: 0.05)
+                    f = input.outputFormat(forBus: 0)
+                }
+            }
+            captureNode = input
+            format = f
+        }
         guard format.channelCount > 0, format.sampleRate > 0 else {
             inputFormat = nil
             return
@@ -143,23 +219,77 @@ final class AudioEngineController: ObservableObject {
                                                     timelineStart: clip.timelineStartFrame,
                                                     sourceIn: clip.sourceInFrame,
                                                     frames: clip.frameLength,
-                                                    rate: file.processingFormat.sampleRate))
+                                                    rate: file.processingFormat.sampleRate,
+                                                    trackID: track.id))
                 }
             }
             if !backingItems.isEmpty { engine.mainMixerNode.outputVolume = 1 }   // ensure audible
         }
 
-        installInputTapIfNeeded(format: format)
+        if audienceModeEnabled { wireCrowdLane() }
+
+        installInputTapIfNeeded(on: captureNode, format: format)
         engine.prepare()
     }
 
-    private func installInputTapIfNeeded(format: AVAudioFormat) {
+    /// Attaches the crowd ambience player + its ducking mixer and installs the
+    /// envelope-follower consumer on the input tap.
+    private func wireCrowdLane() {
+        guard let buffer = loadCrowdBuffer() else { return }
+        duckGain = 1.0
+        engine.attach(crowdPlayer)
+        engine.attach(crowdMixer)
+        engine.connect(crowdPlayer, to: crowdMixer, format: buffer.format)
+        engine.connect(crowdMixer, to: engine.mainMixerNode, format: buffer.format)
+        crowdMixer.outputVolume = crowdVolume
+        engine.mainMixerNode.outputVolume = 1   // crowd must be audible even without monitoring
+        crowdWired = true
+
+        // Envelope-follower ducking, evaluated per input buffer on the audio thread.
+        addInputConsumer(Self.duckConsumerKey) { [weak self] pcm, _ in
+            guard let self, let ch = pcm.floatChannelData?[0] else { return }
+            let frames = vDSP_Length(pcm.frameLength)
+            guard frames > 0 else { return }
+            var peak: Float = 0
+            vDSP_maxmgv(ch, 1, &peak, frames)
+
+            let reciting = peak > self.duckThreshold
+            let target: Float = reciting ? pow(10, self.duckAmountDb / 20) : 1.0
+            // Fast attack to duck down; slow (configurable) release to swell up.
+            let dt = Double(pcm.frameLength) / max(1, pcm.format.sampleRate)
+            let tau = target < self.duckGain ? 0.05 : self.duckReleaseSeconds
+            let coeff = Float(1 - exp(-dt / tau))
+            self.duckGain += (target - self.duckGain) * coeff
+            self.crowdMixer.outputVolume = self.crowdVolume * self.duckGain
+        }
+    }
+
+    private func loadCrowdBuffer() -> AVAudioPCMBuffer? {
+        if let crowdBuffer { return crowdBuffer }
+        guard let url = Bundle.main.url(forResource: "MajlisCrowd", withExtension: "wav")
+                ?? Bundle.main.url(forResource: "MajlisCrowd", withExtension: "wav", subdirectory: "Audio"),
+              let file = try? AVAudioFile(forReading: url),
+              let buf = AVAudioPCMBuffer(pcmFormat: file.processingFormat,
+                                         frameCapacity: AVAudioFrameCount(file.length)) else { return nil }
+        do { try file.read(into: buf) } catch { return nil }
+        crowdBuffer = buf
+        return buf
+    }
+
+    /// Live crowd-level update (no rebuild needed).
+    func setCrowdVolume(_ v: Float) {
+        crowdVolume = max(0, min(v, 1))
+        if crowdWired { crowdMixer.outputVolume = crowdVolume * duckGain }
+    }
+
+    private func installInputTapIfNeeded(on node: AVAudioNode, format: AVAudioFormat) {
         guard !tapInstalled else { return }
-        engine.inputNode.installTap(onBus: 0, bufferSize: 2048, format: format) { [weak self] buffer, when in
+        node.installTap(onBus: 0, bufferSize: 2048, format: format) { [weak self] buffer, when in
             guard let self else { return }
             // Tap runs on the audio thread — fan out to consumers only.
             for consumer in self.inputConsumers.values { consumer(buffer, when) }
         }
+        tappedNode = node
         tapInstalled = true
     }
 
@@ -189,7 +319,32 @@ final class AudioEngineController: ObservableObject {
                                         frameCount: AVAudioFrameCount(framesToPlay), at: when)
             item.player.play()
         }
+        // Loop the crowd ambience bed for the duration of the session.
+        if crowdWired, let buffer = crowdBuffer {
+            crowdPlayer.scheduleBuffer(buffer, at: nil, options: .loops, completionHandler: nil)
+            crowdPlayer.play()
+        }
+        applyBackingScope()       // honor "hear all / none / one track"
         isRunning = true
+    }
+
+    /// Live-switch which backing tracks are audible while recording, without
+    /// disturbing the mic capture (just toggles backing player volumes).
+    func setMonitorScope(_ scope: MonitorScope) {
+        backingScope = scope
+        applyBackingScope()
+    }
+
+    private func applyBackingScope() {
+        for item in backingItems {
+            let audible: Bool
+            switch backingScope {
+            case .all:           audible = true
+            case .none:          audible = false
+            case .track(let id): audible = item.trackID == id
+            }
+            item.player.volume = audible ? 1 : 0
+        }
     }
 
     func stop() {
@@ -202,9 +357,13 @@ final class AudioEngineController: ObservableObject {
 
     private func teardown() {
         if tapInstalled {
-            engine.inputNode.removeTap(onBus: 0)
+            tappedNode?.removeTap(onBus: 0)
+            tappedNode = nil
             tapInstalled = false
         }
+        // Detach the mobile-stream capture nodes if they were attached.
+        if engine.attachedNodes.contains(captureMixer) { engine.detach(captureMixer) }
+        if let s = mobileCaptureSource, engine.attachedNodes.contains(s.sourceNode) { engine.detach(s.sourceNode) }
         removeInputConsumer(Self.monitorConsumerKey)
         if monitorPlayer.isPlaying { monitorPlayer.stop() }
         if engine.attachedNodes.contains(monitorPlayer) { engine.detach(monitorPlayer) }
@@ -213,6 +372,12 @@ final class AudioEngineController: ObservableObject {
             if engine.attachedNodes.contains(item.player) { engine.detach(item.player) }
         }
         backingItems.removeAll()
+        // Tear down the crowd lane + its ducking consumer.
+        removeInputConsumer(Self.duckConsumerKey)
+        if crowdPlayer.isPlaying { crowdPlayer.stop() }
+        if engine.attachedNodes.contains(crowdPlayer) { engine.detach(crowdPlayer) }
+        if engine.attachedNodes.contains(crowdMixer) { engine.detach(crowdMixer) }
+        crowdWired = false
         engine.stop()
         chain = nil
         monitoringWired = false

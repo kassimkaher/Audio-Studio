@@ -6,6 +6,9 @@ import AVFoundation
 /// selected track's master chain. Reuses the shared effect controls.
 struct MacInspectorView: View {
     @ObservedObject var editor: ProjectEditorViewModel
+    /// The capture session VM — owns the Live Audience / Majlis engine settings,
+    /// surfaced here as a persistent project property (Zone 4, Card 3).
+    @ObservedObject var audience: RecordSessionViewModel
     @EnvironmentObject private var playback: PlaybackService
 
     @State private var clip: Clip?
@@ -31,21 +34,43 @@ struct MacInspectorView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    Text("Properties & Atmosphere")
+                        .font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.textPrimary)
+                    Spacer()
+                    Image(systemName: "info.circle").font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
+                }
                 if clip != nil {
-                    clipInspector
+                    clipPropsCard            // Card 1 — Clip
+                    clipEffectsCard          // Card 2 — Effects Rack
+                    audienceCard             // Card 3 — Live Audience
                 } else if let tid = editor.selectedTrackID, let track = editor.track(tid) {
-                    trackInspector(track)
+                    trackPropsCard(track)    // Card 1 — Track
+                    trackEffectsCard(track)  // Card 2 — Effects Rack
+                    audienceCard             // Card 3 — Live Audience
                 } else {
                     hint
                 }
             }
             .padding(16)
         }
-        .background(Theme.surface.opacity(0.4))
+        .scrollContentBackground(.hidden)
+        .background(Theme.background)
+        .overlay(alignment: .leading) { Divider().overlay(Theme.hairline) }
         .onAppear(perform: sync)
         .onChange(of: editor.selectedClipID) { _ in sync() }
         .onChange(of: editor.selectedTrackID) { _ in sync() }
+    }
+
+    /// Card 3 — the Live Audience / Majlis engine as a persistent project property.
+    private var audienceCard: some View {
+        AudienceControlsView(
+            enabled: Binding(get: { audience.audienceModeEnabled }, set: { audience.audienceModeEnabled = $0 }),
+            crowdVolume: Binding(get: { audience.crowdVolume }, set: { audience.crowdVolume = $0 }),
+            duckingAmountDb: Binding(get: { audience.duckingAmountDb }, set: { audience.duckingAmountDb = $0 }),
+            sensitivity: Binding(get: { audience.duckingSensitivity }, set: { audience.duckingSensitivity = $0 }),
+            designateAsCrowdTake: Binding(get: { audience.isCrowdDesignatedTake }, set: { audience.isCrowdDesignatedTake = $0 }))
     }
 
     private var hint: some View {
@@ -59,8 +84,8 @@ struct MacInspectorView: View {
 
     // MARK: Clip
 
-    private var clipInspector: some View {
-        VStack(alignment: .leading, spacing: 16) {
+    private var clipPropsCard: some View {
+        Card { VStack(alignment: .leading, spacing: 16) {
             Text("Clip").font(.title3.weight(.semibold))
             TextField("Name", text: Binding(get: { clip?.name ?? "" }, set: { clip?.name = $0; commitClip() }))
                 .textFieldStyle(.roundedBorder)
@@ -109,10 +134,17 @@ struct MacInspectorView: View {
                     }.tint(Theme.accent).help("Move to playhead")
                     macNudge("+0.1s", 0.1); macNudge("+1s", 1.0)
                 }
+                HStack(spacing: 6) {                       // fine 50 ms / 10 ms nudges
+                    macNudge("−0.05s", -0.05); macNudge("+0.05s", 0.05)
+                    macNudge("−0.01s", -0.01); macNudge("+0.01s", 0.01)
+                }
             }
+        } }
+    }
 
+    private var clipEffectsCard: some View {
+        Card { VStack(alignment: .leading, spacing: 14) {
             Toggle("Clip Effects", isOn: Binding(get: { fxEnabled }, set: { setFX($0) })).tint(Theme.accent)
-
             if fxEnabled {
                 PresetPickerView(selectedPresetID: $clipPreset, currentChain: clipChain) { clipChain = $0; commitClip() }
                 LabeledSlider(title: "Wet / Dry", value: Binding(get: { clipChain.wetDryMix },
@@ -121,7 +153,7 @@ struct MacInspectorView: View {
                               set: { clipChain.intensity = $0; commitClip() }), range: 0...1.5, tint: Theme.accentWarm)
                 EffectRackView(chain: $clipChain) { commitClip() }
             }
-        }
+        } }.sectionHeader("Effects Rack")
     }
 
     private func macNudge(_ label: String, _ seconds: Double) -> some View {
@@ -132,15 +164,20 @@ struct MacInspectorView: View {
 
     // MARK: Track
 
-    private func trackInspector(_ track: Track) -> some View {
-        let chain = trackBinding(track.id)
-        return VStack(alignment: .leading, spacing: 16) {
+    private func trackPropsCard(_ track: Track) -> some View {
+        Card { VStack(alignment: .leading, spacing: 12) {
             Text("Track · \(track.name)").font(.title3.weight(.semibold))
             Text("Master chain (applied after each clip's effects)")
                 .font(.caption).foregroundStyle(Theme.textSecondary)
             LabeledSlider(title: "Track Volume", value: Binding(
                 get: { editor.track(track.id)?.volume ?? 1 },
                 set: { editor.setVolume($0, forTrack: track.id) }), range: 0...1.5)
+        } }
+    }
+
+    private func trackEffectsCard(_ track: Track) -> some View {
+        let chain = trackBinding(track.id)
+        return Card { VStack(alignment: .leading, spacing: 14) {
             PresetPickerView(selectedPresetID: $trackPreset, currentChain: chain.wrappedValue) { newChain in
                 editor.updateTrackChain(newChain, forTrack: track.id)
                 trackPreset = PresetLibrary.all.first { $0.chain.stages.map(\.kind) == newChain.stages.map(\.kind) }?.id ?? ""
@@ -149,7 +186,7 @@ struct MacInspectorView: View {
             LabeledSlider(title: "Wet / Dry", value: chain.wetDryMix)
             LabeledSlider(title: "Intensity", value: chain.intensity, range: 0...1.5, tint: Theme.accentWarm)
             EffectRackView(chain: chain) { auditionTrack() }
-        }
+        } }.sectionHeader("Effects Rack")
     }
 
     // MARK: Sync & commit

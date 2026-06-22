@@ -22,11 +22,14 @@ final class ConvolutionReverbNode: AudioProcessingNode {
     private var currentMix: Float = 0.45
 
     private var convAU: ConvolutionAudioUnit? { (unit as? AVAudioUnit)?.auAudioUnit as? ConvolutionAudioUnit }
+    /// Offline export keeps the full IR (no real-time cap); live playback caps it.
+    private let offline: Bool
 
-    init(id: UUID = UUID(), provider: ImpulseResponseProviding = BundleIRProvider.shared) {
+    init(id: UUID = UUID(), provider: ImpulseResponseProviding = BundleIRProvider.shared, offline: Bool = false) {
         ConvolutionRegistry.registerIfNeeded()
         self.id = id
         self.provider = provider
+        self.offline = offline
     }
 
     var avNodes: [AVAudioNode] { [unit] }
@@ -42,6 +45,7 @@ final class ConvolutionReverbNode: AudioProcessingNode {
         let irID = spec.stringParams?[ParamKeys.ir] ?? provider.available.first?.id
         if let irID, irID != loadedIRID {
             if let samples = provider.samples(for: irID, sampleRate: sampleRate) {
+                convAU?.capIRTaps = offline ? .max : DirectConvolver.realtimeIRTaps
                 convAU?.setIR(samples)
                 loadedIRID = irID
             }

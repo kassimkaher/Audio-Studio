@@ -69,6 +69,19 @@ final class RecordingService: ObservableObject {
         try? engineController.start()
     }
 
+    /// Toggles the Live Audience crowd lane. Rebuilds the monitor graph so the
+    /// crowd player + ducking consumer are (un)wired. No-op mid-recording.
+    func setAudienceMode(_ on: Bool, chain: EffectChainSpec) {
+        engineController.audienceModeEnabled = on
+        guard isMonitoring, !isRecording else { return }
+        engineController.prepare(chain: chain, monitor: engineController.isMonitoringEnabled)
+        // The meter consumer persists across prepare(); re-add to be safe.
+        engineController.addInputConsumer(Self.meterKey) { [weak self] buffer, _ in
+            self?.waveform.ingest(buffer)
+        }
+        try? engineController.start()
+    }
+
     /// Stops the live input tap and engine (when not recording).
     func stopMonitoring() {
         engineController.removeInputConsumer(Self.meterKey)

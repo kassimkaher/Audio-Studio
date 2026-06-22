@@ -23,6 +23,50 @@ final class RecordSessionViewModel: ObservableObject {
     /// The captured take, available after stopping and before Approve/Discard.
     @Published private(set) var recordedSource: AudioSource?
 
+    // MARK: Live Audience / Majlis atmosphere controls
+    //
+    // A looping crowd ambience bed is heard live and auto-ducks under the reciter
+    // (envelope-follower sidechain in `AudioEngineController`). The crowd is NOT
+    // captured into the take — the mic tap is separate — so the vocal stem stays
+    // clean while the Radoud performs "in front of the audience".
+
+    /// Quick toggle on the record panel. Rebuilds the monitor graph to (un)wire
+    /// the crowd lane.
+    @Published var audienceModeEnabled = false {
+        didSet {
+            guard audienceModeEnabled != oldValue else { return }
+            recordingService.setAudienceMode(audienceModeEnabled, chain: chain)
+        }
+    }
+    /// Background crowd level (0...1) before ducking — applied live.
+    @Published var crowdVolume: Float = 0.6 {
+        didSet { engineController.setCrowdVolume(crowdVolume) }
+    }
+    /// How hard the crowd ducks while reciting (dB attenuation, −3…−18) — live.
+    @Published var duckingAmountDb: Float = -9 {
+        didSet { engineController.duckAmountDb = duckingAmountDb }
+    }
+    /// Ducking sensitivity: the input level that counts as "reciting" — live.
+    @Published var duckingSensitivity: Float = 0.04 {
+        didSet { engineController.duckThreshold = duckingSensitivity }
+    }
+
+    /// When ON, the next approved take is committed to the **active target track**
+    /// (whatever the user selected) and tagged with the "Live Majlis / Crowd
+    /// Presence" chain — for recording a Raddah / crowd layer, not the lead vocal.
+    /// Independent of `audienceModeEnabled` (which is the live monitor atmosphere).
+    @Published var isCrowdDesignatedTake = false
+
+    /// Which existing tracks the performer hears while recording (overdub monitor).
+    /// Live-switchable: `.all`, `.none`, or a single `.track(id)`.
+    @Published var monitorScope: MonitorScope = .all {
+        didSet { engineController.setMonitorScope(monitorScope) }
+    }
+
+    /// The timeline frame where recording began (the cursor) — backing playback
+    /// starts here and the approved take is placed here.
+    private var recordStartFrame: AVAudioFramePosition = 0
+
     private let env: AppEnvironment
 
     init(env: AppEnvironment) { self.env = env }
@@ -44,6 +88,11 @@ final class RecordSessionViewModel: ObservableObject {
     /// Supplies the existing project to play as a backing track while recording
     /// (overdub). Set by the record view from the editor.
     var backingProvider: (() -> Project?)?
+
+    /// Tracks available to monitor while recording (for the "hear" dropdown).
+    var monitorTracks: [(id: UUID, name: String)] {
+        (backingProvider?()?.tracks ?? []).map { ($0.id, $0.name) }
+    }
 
     var wetDry: Float {
         get { chain.wetDryMix }
@@ -110,6 +159,8 @@ final class RecordSessionViewModel: ObservableObject {
     }
 
     private func startRecording() async {
+        let startFrame = max(0, playback.currentFrame)   // record + listen from the cursor
+        recordStartFrame = startFrame
         playback.stop()
         previewClip = nil
         recordedSource = nil
@@ -117,10 +168,14 @@ final class RecordSessionViewModel: ObservableObject {
             let granted = await env.sessionManager.requestPermission()
             if !granted { showPermissionDenied = true; return }
         }
-        // Overdub: if the project already has audio, play it as a backing track.
+        // Overdub: if the project already has audio, play it as a backing track —
+        // starting from the cursor, scoped by the monitor selection.
         let backing = backingProvider?().flatMap { $0.totalFrames > 0 ? $0 : nil }
-        do { try recordingService.start(chain: chain, monitor: monitorEnabled, backing: backing, from: 0) }
-        catch { errorMessage = error.localizedDescription }
+        do {
+            try recordingService.start(chain: chain, monitor: monitorEnabled,
+                                       backing: backing, from: startFrame)
+            engineController.setMonitorScope(monitorScope)
+        } catch { errorMessage = error.localizedDescription }
     }
 
     func stopRecording() {
@@ -141,19 +196,35 @@ final class RecordSessionViewModel: ObservableObject {
         }
     }
 
-    /// Commits the take to the editor on the chosen track and clears the session.
+    /// Commits the take to the **active target track** (dynamic — whatever the
+    /// user selected; no hardcoded indices) and clears the session. If the take
+    /// is designated a Crowd/Raddah layer, the Live Majlis chain is applied to
+    /// that clip instead of the current preset.
     func approve(into editor: ProjectEditorViewModel, trackID: UUID?) {
         guard let source = recordedSource else { return }
         playback.stop()
-        let target = trackID ?? editor.project.tracks.first?.id ?? editor.addTrackReturningID()
-        // Overdub latency compensation: automatic round-trip latency + the user's
-        // manual fine-tune, so the take lines up with the backing it was cut over.
+        playback.seek(to: recordStartFrame)   // land the take where recording began (cursor)
+        let target = trackID
+            ?? editor.selectedTrackID
+            ?? editor.project.tracks.first?.id
+            ?? editor.addTrackReturningID()
+
+        // Overdub latency compensation on the target track: automatic round-trip
+        // latency + the user's manual fine-tune, so the take aligns with whatever
+        // was playing back while recording.
         var align: AVAudioFramePosition = 0
         if recordingService.lastWasOverdub {
             let manual = AVAudioFramePosition((syncOffsetMs / 1000.0 * source.sampleRate).rounded())
             align = recordingService.lastLatencyFrames + manual
         }
-        editor.appendClip(source: source, chain: chain, toTrack: target, name: "Take", alignFrames: align)
+
+        // Crowd/Raddah takes get the "Live Majlis / Crowd Presence" chain; lead
+        // takes get the currently selected chain.
+        let clipChain = isCrowdDesignatedTake ? PresetLibrary.liveMajlis.chain : chain
+        let clipName = isCrowdDesignatedTake ? "Raddah / Crowd" : "Take"
+        editor.appendClip(source: source, chain: clipChain, toTrack: target,
+                          name: clipName, alignFrames: align)
+
         recordingService.relinquishFile()   // the clip now owns the file; don't delete on dismiss
         recordedSource = nil
         previewClip = nil

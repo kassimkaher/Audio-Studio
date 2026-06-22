@@ -143,6 +143,83 @@ struct PresetPickerView: View {
     }
 }
 
+/// Live Audience / Majlis atmosphere controls (shared by the iOS & macOS record
+/// panels): the master toggle plus crowd volume, ducking depth and sensitivity.
+/// Binding-driven so it stays decoupled from any specific view model.
+struct AudienceControlsView: View {
+    @Binding var enabled: Bool
+    @Binding var crowdVolume: Float
+    @Binding var duckingAmountDb: Float
+    @Binding var sensitivity: Float
+    /// Routes the next approved take to the active track as a Raddah/crowd layer.
+    @Binding var designateAsCrowdTake: Bool
+
+    /// Crowd volume shown as dB (matches the Stitch "Crowd Vol  -6.0 dB").
+    private var crowdDb: String {
+        crowdVolume <= 0.001 ? "-∞ dB" : String(format: "%.1f dB", 20 * log10(crowdVolume))
+    }
+    /// Ducking depth 0…100% mapped onto the −3…−18 dB attenuation range.
+    private var depthBinding: Binding<Float> {
+        Binding(get: { (abs(duckingAmountDb) - 3) / 15 * 100 },
+                set: { duckingAmountDb = -(3 + ($0 / 100) * 15) })
+    }
+
+    var body: some View {
+        Card(glow: Theme.accentWarm) {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("LIVE AUDIENCE ENGINE")
+                            .font(.system(size: 13, weight: .bold)).foregroundStyle(Theme.accentWarm)
+                            .neonGlow(Theme.accentWarm, radius: 4)
+                        Text("محرك الجمهور الحي")
+                            .font(.caption2).foregroundStyle(Theme.accentWarm.opacity(0.8))
+                    }
+                    Spacer()
+                    Toggle("", isOn: $enabled).labelsHidden()
+                        .toggleStyle(.switch).tint(Theme.accentWarm)
+                }
+
+                Divider().overlay(Theme.accentWarm.opacity(0.25))
+
+                Button { designateAsCrowdTake.toggle() } label: {
+                    HStack(spacing: 10) {
+                        checkBox(designateAsCrowdTake, tint: Theme.accentWarm)
+                        Text("Designate as Crowd Take (ردّة)")
+                            .font(.system(size: 13)).foregroundStyle(Theme.textPrimary)
+                        Spacer()
+                    }.contentShape(Rectangle())
+                }.buttonStyle(.plain)
+
+                goldSlider("Crowd Vol", readout: crowdDb, value: $crowdVolume, range: 0...1)
+                goldSlider("Ducking Depth", readout: "\(Int(depthBinding.wrappedValue))%",
+                           value: depthBinding, range: 0...100)
+            }
+        }
+    }
+
+    private func checkBox(_ on: Bool, tint: Color) -> some View {
+        RoundedRectangle(cornerRadius: 4)
+            .fill(on ? tint : Color.clear)
+            .overlay(RoundedRectangle(cornerRadius: 4).strokeBorder(on ? tint : Theme.hairline, lineWidth: 1.5))
+            .overlay(Image(systemName: "checkmark").font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(.black).opacity(on ? 1 : 0))
+            .frame(width: 18, height: 18)
+    }
+
+    private func goldSlider(_ title: String, readout: String, value: Binding<Float>, range: ClosedRange<Float>) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(title.uppercased()).font(.system(size: 10, weight: .semibold)).tracking(1)
+                    .foregroundStyle(Theme.textSecondary)
+                Spacer()
+                Text(readout).font(.system(size: 11, design: .monospaced)).foregroundStyle(Theme.accentWarm)
+            }
+            Slider(value: value, in: range).tint(Theme.accentWarm).controlSize(.small)
+        }
+    }
+}
+
 /// The editable effect rack: each filter expands to reveal its parameter sliders,
 /// can be enabled/bypassed and removed, and new filters can be added. Shared by
 /// iOS and macOS. Structural edits (add/remove) take effect on the next
@@ -195,30 +272,41 @@ private struct EffectStageRow: View {
     @State private var expanded = false
 
     private var isML: Bool { stage.kind == .mlVoiceConversion }
+    private var isConv: Bool { stage.kind == .convolutionReverb }
+    private var rowAccent: Color { isConv ? Theme.accentWarm : Theme.accent }
 
     var body: some View {
         let hasParams = !stage.kind.editableParams.isEmpty
         VStack(spacing: 0) {
             HStack(spacing: 10) {
-                Image(systemName: stage.kind.symbol).frame(width: 22).foregroundStyle(Theme.accent)
-                Text(stage.kind.displayName).foregroundStyle(Theme.textPrimary)
+                // Enable checkbox (Stitch node-row style).
+                Button { if !isML { stage.isEnabled.toggle(); onChange() } } label: {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(stage.isEnabled ? rowAccent : .clear)
+                        .overlay(RoundedRectangle(cornerRadius: 4)
+                            .strokeBorder(stage.isEnabled ? rowAccent : Theme.hairline, lineWidth: 1.5))
+                        .overlay(Image(systemName: "checkmark").font(.system(size: 9, weight: .bold))
+                            .foregroundStyle(.black).opacity(stage.isEnabled ? 1 : 0))
+                        .frame(width: 18, height: 18)
+                }
+                .buttonStyle(.plain).disabled(isML)
+
+                Text(stage.kind.displayName)
+                    .font(.system(size: 13, weight: isConv ? .semibold : .medium))
+                    .foregroundStyle(isConv ? Theme.accentWarm : Theme.textPrimary)
                 if isML {
                     Text("Phase 2").font(.caption2.weight(.bold))
                         .padding(.horizontal, 6).padding(.vertical, 2)
                         .background(Theme.accentWarm.opacity(0.25)).clipShape(Capsule())
                         .foregroundStyle(Theme.accentWarm)
-                } else if hasParams {
-                    Text("\(stage.kind.editableParams.count) settings")
-                        .font(.caption2).foregroundStyle(Theme.textSecondary)
                 }
                 Spacer()
                 if hasParams {
                     Image(systemName: expanded ? "chevron.up" : "chevron.down")
                         .font(.caption).foregroundStyle(Theme.textSecondary)
                 }
-                Toggle("", isOn: Binding(get: { stage.isEnabled },
-                                         set: { stage.isEnabled = $0; onChange() }))
-                    .labelsHidden().tint(Theme.accent).disabled(isML)
+                Image(systemName: "line.3.horizontal").font(.caption)
+                    .foregroundStyle(Theme.textSecondary.opacity(0.5))      // drag handle
                 Menu {
                     Button(role: .destructive, action: onRemove) { Label("Remove", systemImage: "trash") }
                 } label: { Image(systemName: "ellipsis").foregroundStyle(Theme.textSecondary) }
@@ -246,8 +334,10 @@ private struct EffectStageRow: View {
             }
         }
         .padding(.horizontal, 10)
-        .background(Theme.surfaceElevated.opacity(0.5))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .background(isConv ? Theme.accentWarm.opacity(0.08) : Theme.surfaceElevated.opacity(0.6))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8)
+            .strokeBorder(isConv ? Theme.accentWarm.opacity(0.5) : Theme.hairline, lineWidth: 1))
     }
 
     /// Acoustic-space (IR) selector for the convolution filter.
